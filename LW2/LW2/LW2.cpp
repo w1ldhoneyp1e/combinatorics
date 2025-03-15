@@ -6,6 +6,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <iomanip>
+#include <set>
+#include <algorithm>
 
 class Graph {
 private:
@@ -17,106 +19,31 @@ private:
 
     std::vector<std::vector<bool>> adjacencyMatrix;
     std::vector<std::pair<int, int>> times;
+    std::set<int> articulationPoints;
     std::vector<Edge> edgeList;
+    std::vector<bool> visited;
+    std::vector<int> up;
     int time;
-
-    const std::string RED = "\033[31m";
-    const std::string GREEN = "\033[32m";
-    const std::string RESET = "\033[0m";
-
-    void initDFS() {
-        times.resize(adjacencyMatrix.size(), {-1, -1});
-        time = 0;
-    }
-
-    void printMatrixLine(std::ostream& out, size_t i, int width, bool useColor = true) const {
-        const std::string divider = useColor 
-            ? width == 4 
-                ? "   " 
-                : "  " 
-            : width == 4 
-                ? "  " 
-                : " ";
-        out << std::setw(width) << i << divider;
-        for (size_t j = 0; j < adjacencyMatrix[i].size(); j++) {
-            if (adjacencyMatrix[i][j]) {
-                if (useColor) {
-                    out << std::setw(width-1) << GREEN << "1" << RESET << divider;
-                } else {
-                    out << std::setw(width-1) << "1" << divider;
-                }
-            } else {
-                if (useColor) {
-                    out << std::setw(width-1) << RED << "0" << RESET << divider;
-                } else {
-                    out << std::setw(width-1) << "0" << divider;
-                }
-            }
-        }
-        out << "\n";
-    }
-
-    void printTimesLine(std::ostream& out, size_t i) const {
-        out << std::setw(7) << i << " | ";
-        out << std::setw(4) << times[i].first << " | ";
-        out << std::setw(5) << times[i].second << "\n";
-    }
-
-    void printAdjacencyMatrixToStream(std::ostream& out, bool useColor) const {
-        if (adjacencyMatrix.empty()) {
-            out << "Граф пуст" << std::endl;
-            return;
-        }
-
-        int width = 3;
-        if (adjacencyMatrix.size() > 9) {
-            width = 4;
-        }
-
-        out << "Матрица смежности:\n";
-        out << std::setw(width) << " ";
-        for (size_t i = 0; i < adjacencyMatrix.size(); i++) {
-            out << std::setw(width) << i;
-        }
-        out << "\n";
-        for (size_t i = 0; i < adjacencyMatrix.size(); i++) {
-            printMatrixLine(out, i, width, useColor);
-        }
-    }
-
-    void printDFSTimesToStream(std::ostream& out) const {
-        if (times.empty()) {
-            out << "DFS еще не был выполнен" << std::endl;
-            return;
-        }
-
-        out << "Временные метки DFS:\n";
-        out << "Вершина | Вход | Выход\n";
-        out << "---------------------\n";
-        for (size_t i = 0; i < times.size(); i++) {
-            printTimesLine(out, i);
-        }
-    }
 
     void readEdgeList(const std::string& filename) {
         std::ifstream file(filename);
         if (!file.is_open()) {
-            throw std::runtime_error("Не удалось открыть файл");
+            throw std::runtime_error("Failed to open file");
         }
 
         std::string line;
         if (!std::getline(file, line)) {
-            throw std::runtime_error("Файл пуст");
+            throw std::runtime_error("File is empty");
         }
         
         try {
             int vertexCount = std::stoi(line);
             if (vertexCount < 0) {
-                throw std::runtime_error("Количество вершин не может быть отрицательным");
+                throw std::runtime_error("Number of vertices cannot be negative");
             }
             adjacencyMatrix.resize(vertexCount, std::vector<bool>(vertexCount, false));
         } catch (const std::invalid_argument&) {
-            throw std::runtime_error("Некорректное количество вершин в первой строке");
+            throw std::runtime_error("Invalid number of vertices in the first line");
         }
 
         while (std::getline(file, line)) {
@@ -129,7 +56,7 @@ private:
             
             if (v1 < 0 || v1 >= adjacencyMatrix.size() || 
                 v2 < 0 || v2 >= adjacencyMatrix.size()) {
-                throw std::runtime_error("Номер вершины выходит за допустимые пределы");
+                throw std::runtime_error("Vertex number is out of bounds");
             }
             
             edgeList.emplace_back(v1, v2);
@@ -140,6 +67,36 @@ private:
         for (const auto& edge : edgeList) {
             adjacencyMatrix[edge.from][edge.to] = true;
             adjacencyMatrix[edge.to][edge.from] = true;
+        }
+    }
+
+    void findArticulationPointsDFS(int v, int parent, int& timer) {
+        visited[v] = true;
+        times[v].first = up[v] = timer++;
+        int children = 0;
+
+        for (size_t to = 0; to < adjacencyMatrix[v].size(); to++) {
+            if (!adjacencyMatrix[v][to]) continue;
+            
+            if (to == parent) continue;
+            
+            if (visited[to]) {
+                up[v] = std::min(up[v], times[to].first);
+            } else {
+                findArticulationPointsDFS(to, v, timer);
+                up[v] = std::min(up[v], up[to]);
+                
+                if (up[to] >= times[v].first && parent != -1) {
+                    articulationPoints.insert(v);
+                }
+                children++;
+            }
+        }
+        
+        times[v].second = timer++;
+        
+        if (parent == -1 && children > 1) {
+            articulationPoints.insert(v);
         }
     }
 
@@ -165,61 +122,60 @@ public:
         return result;
     }
 
-    void DFS() {
-        initDFS();
-        std::vector<bool> visited(adjacencyMatrix.size(), false);
+    std::set<int> findArticulationPoints() {
+        int n = adjacencyMatrix.size();
+        times.assign(n, {-1, -1});
+        up.assign(n, -1);
+        visited.assign(n, false);
+        articulationPoints.clear();
         
-        for (size_t v = 0; v < adjacencyMatrix.size(); v++) {
-            if (!visited[v]) {
-                DFSRecursive(v, visited);
+        int timer = 0;
+        for (int i = 0; i < n; i++) {
+            if (!visited[i]) {
+                findArticulationPointsDFS(i, -1, timer);
             }
         }
+        
+        return articulationPoints;
     }
 
-    void printAdjacencyMatrix() const {
-        printAdjacencyMatrixToStream(std::cout, true);
-
-        std::ofstream outFile("output.txt");
-        if (outFile.is_open()) {
-            printAdjacencyMatrixToStream(outFile, false);
-        }
-    }
-
-    void printDFSTimes() const {
-        printDFSTimesToStream(std::cout);
-
-        std::ofstream outFile("output.txt", std::ios::app);
-        if (outFile.is_open()) {
-            outFile << "\n";
-            printDFSTimesToStream(outFile);
-        }
-    }
-
-private:
-    void DFSRecursive(int v, std::vector<bool>& visited) {
-        visited[v] = true;
-        times[v].first = ++time;
-
-        for (size_t i = 0; i < adjacencyMatrix[v].size(); i++) {
-            if (adjacencyMatrix[v][i] && !visited[i]) {
-                DFSRecursive(i, visited);
+    void printArticulationPoints(std::ostream& out) const {
+        out << "\nArticulation points: ";
+        if (articulationPoints.empty()) {
+            out << "none\n";
+        } else {
+            for (int point : articulationPoints) {
+                out << point << " ";
             }
+            out << "\n";
         }
+    }
 
-        times[v].second = ++time;
+    void printArticulationPoints(const std::string& outputFile) const {
+        try {
+            std::ofstream outFile(outputFile);
+            outFile << "Searching for articulation points:";
+            printArticulationPoints(outFile);
+        }
+        catch (const std::exception& e) {
+            throw std::runtime_error("Failed to write to output file: " + std::string(e.what()));
+        }
     }
 };
 
-int main() {
-    setlocale(LC_ALL, "RU");
+int main(int argc, char* argv[]) {    
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " <input_file> <output_file>" << std::endl;
+        return 1;
+    }
+    
     try {
-        Graph g("input.txt");
-        g.printAdjacencyMatrix();
-        g.DFS();
-        g.printDFSTimes();
+        Graph g(argv[1]);
+        auto articulationPoints = g.findArticulationPoints();
+        g.printArticulationPoints(argv[2]);
     }
     catch (const std::exception& e) {
-        std::cerr << "Ошибка: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
         return 1;
     }
     return 0;
