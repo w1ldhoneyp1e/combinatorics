@@ -1,11 +1,12 @@
 #pragma once
 
-class Vertex {
+class Vertex 
+{
 public:
     double x, y;
-    int index;
+    size_t index;
 
-    Vertex(double x = 0, double y = 0, int idx = 0);
+    Vertex(double x, double y, size_t idx);
 
     bool operator<(const Vertex& other) const;
 };

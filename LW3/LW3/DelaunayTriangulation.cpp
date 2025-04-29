@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include "DelaunayTriangulation.h"
 #include "Draw.h"
 
@@ -17,13 +18,26 @@ std::vector<Face> DelaunayTriangulation::CreateBaseTriangulation(std::vector<Ver
 {
     std::vector<Face> result;
 
-    if (points.size() < 3) {
+    if (points.size() < 3) 
+    {
         return result;
     }
 
-    Vertex* v1 = &points[0];
-    Vertex* v2 = &points[1];
-    Vertex* v3 = &points[2];
+    Vertex* v1 = nullptr;
+    Vertex* v2 = nullptr;
+    Vertex* v3 = nullptr;
+
+    for (auto& vertex : vertices)
+    {
+        if (vertex.x == points[0].x && vertex.y == points[0].y) v1 = &vertex;
+        if (vertex.x == points[1].x && vertex.y == points[1].y) v2 = &vertex;
+        if (vertex.x == points[2].x && vertex.y == points[2].y) v3 = &vertex;
+    }
+
+    if (!v1 || !v2 || !v3) {
+        std::cout << "Error: Could not find vertices in the main vector" << std::endl;
+        return result;
+    }
 
     double orientation = (v2->x - v1->x) * (v3->y - v1->y) -
         (v3->x - v1->x) * (v2->y - v1->y);
@@ -201,7 +215,7 @@ Vertex* DelaunayTriangulation::FindBottomCandidate(Edge* edge, const std::vector
 
     for (const Face& face : triangulation) 
     {
-        if (face.e1 == edge || face.e2 == edge || face.e3 == edge) 
+        if (face.e1 == edge || face.e2 == edge || face.e3 == edge)
         {
             Vertex* candidate = nullptr;
             if (!face.ContainsVertex(edge->v1) && !face.ContainsVertex(edge->v2)) 
@@ -239,14 +253,32 @@ double DelaunayTriangulation::CalculateAngle(Vertex* v1, Vertex* v2, Vertex* v3)
     return std::atan2(dx1 * dy2 - dy1 * dx2, dx1 * dx2 + dy1 * dy2);
 }
 
-std::vector<Face> HandleFourPoints(std::vector<Vertex>& points) 
+std::vector<Face> DelaunayTriangulation::HandleFourPoints(std::vector<Vertex>& points) 
 {
     std::vector<Face> result;
     
-    Vertex* v1 = &points[0];
-    Vertex* v2 = &points[1];
-    Vertex* v3 = &points[2];
-    Vertex* v4 = &points[3];
+    Vertex* v1 = nullptr;
+    Vertex* v2 = nullptr;
+    Vertex* v3 = nullptr;
+    Vertex* v4 = nullptr;
+
+    for (auto& vertex : vertices)
+    {
+        if (std::abs(vertex.x - points[0].x) < 1e-10 && std::abs(vertex.y - points[0].y) < 1e-10) 
+            v1 = &vertex;
+        if (std::abs(vertex.x - points[1].x) < 1e-10 && std::abs(vertex.y - points[1].y) < 1e-10) 
+            v2 = &vertex;
+        if (std::abs(vertex.x - points[2].x) < 1e-10 && std::abs(vertex.y - points[2].y) < 1e-10) 
+            v3 = &vertex;
+        if (std::abs(vertex.x - points[3].x) < 1e-10 && std::abs(vertex.y - points[3].y) < 1e-10) 
+            v4 = &vertex;
+    }
+
+    if (!v1 || !v2 || !v3 || !v4) 
+    {
+        std::cout << "Error: Could not find vertices in the main vector" << std::endl;
+        return result;
+    }
     
     result.emplace_back(v1, v2, v3);
     
@@ -254,7 +286,8 @@ std::vector<Face> HandleFourPoints(std::vector<Vertex>& points)
     if (firstTriangle.IsDelaunay(*v4))
     {
         result.emplace_back(v2, v3, v4);
-    } else 
+    } 
+    else 
     {
         result.emplace_back(v1, v3, v4);
         result.emplace_back(v1, v2, v4);
@@ -263,161 +296,19 @@ std::vector<Face> HandleFourPoints(std::vector<Vertex>& points)
     return result;
 }
 
-// void DelaunayTriangulation::AddPointOutsideTriangulation(Vertex& point, std::vector<Face>& triangulation) {
-//     double minDist = std::numeric_limits<double>::infinity();
-//     Face* closestFace = nullptr;
-//     Vertex *v1 = nullptr, *v2 = nullptr;
-    
-//     for (Face& face : triangulation) {
-//         double d1 = DistanceToEdge(point, face.v1, face.v2);
-//         double d2 = DistanceToEdge(point, face.v2, face.v3);
-//         double d3 = DistanceToEdge(point, face.v3, face.v1);
-        
-//         if (d1 < minDist) {
-//             minDist = d1;
-//             closestFace = &face;
-//             v1 = face.v1;
-//             v2 = face.v2;
-//         }
-//         if (d2 < minDist) {
-//             minDist = d2;
-//             closestFace = &face;
-//             v1 = face.v2;
-//             v2 = face.v3;
-//         }
-//         if (d3 < minDist) {
-//             minDist = d3;
-//             closestFace = &face;
-//             v1 = face.v3;
-//             v2 = face.v1;
-//         }
-//     }
-    
-//     Face newFace(&point, v1, v2);
-//     triangulation.push_back(newFace);
-    
-//     LegalizeEdge(&point, newFace.e1, triangulation);
-// }
-
-// void DelaunayTriangulation::LegalizeEdge(Vertex* p, Edge* edge, std::vector<Face>& triangulation) {
-//     Face* currentFace = nullptr;
-//     Face* adjacentFace = nullptr;
-    
-//     for (Face& face : triangulation) {
-//         if (face.ContainsVertex(p) && 
-//             (face.e1 == edge || face.e2 == edge || face.e3 == edge)) {
-//             currentFace = &face;
-//             break;
-//         }
-//     }
-    
-//     if (!currentFace) return;
-    
-//     adjacentFace = FindAdjacentTriangle(*currentFace, edge->v1, edge->v2, triangulation);
-//     if (!adjacentFace) return;
-    
-//     Vertex* oppositeVertex = adjacentFace->GetOppositeVertex(edge->v1, edge->v2);
-    
-//     if (!currentFace->IsDelaunay(*oppositeVertex)) {
-//         Face newFace1(p, oppositeVertex, edge->v1);
-//         Face newFace2(p, oppositeVertex, edge->v2);
-        
-//         *currentFace = newFace1;
-//         *adjacentFace = newFace2;
-        
-//         Edge* edge1 = newFace1.e2; 
-//         Edge* edge2 = newFace1.e3; 
-//         Edge* edge3 = newFace2.e3; 
-        
-//         LegalizeEdge(p, edge2, triangulation);
-//         LegalizeEdge(p, edge3, triangulation);
-//     }
-// }
-
-// Face* DelaunayTriangulation::FindAdjacentTriangle(const Face& face, Vertex* v1, Vertex* v2, std::vector<Face>& triangulation) {
-//     // Ищем треугольник, который содержит оба указанных vertex и не является исходным треугольником
-//     for (Face& triangle : triangulation) {
-//         if (&triangle != &face && 
-//             triangle.ContainsVertex(v1) && 
-//             triangle.ContainsVertex(v2)) {
-//             return &triangle;
-//         }
-//     }
-//     return nullptr;
-// }
-
-// void DelaunayTriangulation::AddPointToTriangulation(Vertex& point, std::vector<Face>& triangulation) {
-//     bool pointFound = false;
-    
-//     for (size_t i = 0; i < triangulation.size(); i++) {
-//         Face& face = triangulation[i];
-//         if (face.ContainsPoint(point)) {
-//             Face newFace1(&point, face.v1, face.v2);
-//             Face newFace2(&point, face.v2, face.v3);
-//             Face newFace3(&point, face.v3, face.v1);
-            
-//             triangulation[i] = newFace1;
-//             triangulation.push_back(newFace2);
-//             triangulation.push_back(newFace3);
-            
-//             LegalizeEdge(&point, newFace1.e1, triangulation);
-//             LegalizeEdge(&point, newFace2.e1, triangulation);
-//             LegalizeEdge(&point, newFace3.e1, triangulation);
-//             pointFound = true;
-//             break;
-//         }
-//     }
-    
-//     if (!pointFound) {
-//         for (size_t i = 0; i < triangulation.size(); i++) {
-//             Face& face = triangulation[i];
-//             if (face.e1->ContainsPoint(point)) {
-//                 auto [newFace1, newFace2] = face.SplitAtEdge(point, face.v1, face.v2);
-//                 triangulation[i] = newFace1;
-//                 triangulation.push_back(newFace2);
-//                 return;
-//             }
-//             if (face.e2->ContainsPoint(point)) {
-//                 auto [newFace1, newFace2] = face.SplitAtEdge(point, face.v2, face.v3);
-//                 triangulation[i] = newFace1;
-//                 triangulation.push_back(newFace2);
-//                 return;
-//             }
-//             if (face.e3->ContainsPoint(point)) {
-//                 auto [newFace1, newFace2] = face.SplitAtEdge(point, face.v3, face.v1);
-//                 triangulation[i] = newFace1;
-//                 triangulation.push_back(newFace2);
-//                 return;
-//             }
-//         }
-        
-//         AddPointOutsideTriangulation(point, triangulation);
-//     }
-// }
-
 std::vector<Face> DelaunayTriangulation::DivideAndConquer(std::vector<Vertex>& points) 
 {
-    int N = points.size();
+    size_t N = points.size();
     
     if (N == 3) 
     {
         return CreateBaseTriangulation(points);
     }
-    
+
     if (N == 4) 
     {
         return HandleFourPoints(points);
     }
-    
-    // if (N == 5) {
-    //     std::vector<Vertex> first(points.begin(), points.begin() + 3);
-    //     auto result = CreateBaseTriangulation(first);
-        
-    //     for (int i = 3; i < 5; i++) {
-    //         AddPointToTriangulation(points[i], result);
-    //     }
-    //     return result;
-    // }
     
     if (N == 8) 
     {
@@ -441,13 +332,13 @@ std::vector<Face> DelaunayTriangulation::DivideAndConquer(std::vector<Vertex>& p
         return Merge(leftTri, rightTri);
     }
     
-    int mid = N / 2;
+    size_t mid = N / 2;
     std::vector<Vertex> left(points.begin(), points.begin() + mid);
     std::vector<Vertex> right(points.begin() + mid, points.end());
-    
+
     auto leftTri = DivideAndConquer(left);
     auto rightTri = DivideAndConquer(right);
-    
+
     return Merge(leftTri, rightTri);
 }
 
@@ -459,6 +350,5 @@ void DelaunayTriangulation::AddVertex(double x, double y)
 void DelaunayTriangulation::Triangulate() 
 {
     std::sort(vertices.begin(), vertices.end());
-
     faces = DivideAndConquer(vertices);
 }

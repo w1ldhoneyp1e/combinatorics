@@ -2,6 +2,7 @@
 #include "Vertex.h"
 #include "Edge.h"
 #include <vector>
+#include <iostream>
 #include "Face.h"
 
 class DelaunayTriangulation 
@@ -11,6 +12,7 @@ private:
     std::vector<Face> faces;
 
     std::vector<Face> CreateBaseTriangulation(std::vector<Vertex>& points);
+    std::vector<Face> HandleFourPoints(std::vector<Vertex>& points);
     std::vector<Face> Merge(const std::vector<Face>& left, const std::vector<Face>& right);
     Edge* FindBaseEdge(const std::vector<Face>& left, const std::vector<Face>& right);
     bool IsDelaunayEdge(Edge* edge, Vertex* v, const std::vector<Face>& triangulation);
@@ -25,11 +27,9 @@ private:
     Face* FindAdjacentTriangle(const Face& face, Vertex* v1, Vertex* v2, std::vector<Face>& triangulation);
 
 public:
-    void AddVertex(double x, double y);
-
-    void Triangulate();
-
     const std::vector<Vertex>& GetVertices() const;
     const std::vector<Face>& GetFaces() const;
+    void AddVertex(double x, double y);
+    void Triangulate();
 };
 

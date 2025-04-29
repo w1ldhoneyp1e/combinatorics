@@ -76,10 +76,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sfml-system-d.lib;sfml-window-d.lib;sfml-graphics-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -90,12 +93,16 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sfml-system.lib;sfml-window.lib;sfml-graphics.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -104,10 +111,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sfml-system-d.lib;sfml-window-d.lib;sfml-graphics-d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -118,38 +128,33 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sfml-system.lib;sfml-window.lib;sfml-graphics.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DelaunayTriangulation.cpp" />
+    <ClCompile Include="Draw.cpp" />
+    <ClCompile Include="Edge.cpp" />
+    <ClCompile Include="Face.cpp" />
     <ClCompile Include="LW3.cpp" />
+    <ClCompile Include="Vertex.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <ClInclude Include="DelaunayTriangulation.h" />
+    <ClInclude Include="Draw.h" />
+    <ClInclude Include="Edge.h" />
+    <ClInclude Include="Face.h" />
+    <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\sfml-graphics.redist.2.4.2.0\build\native\sfml-graphics.redist.targets" Condition="Exists('..\packages\sfml-graphics.redist.2.4.2.0\build\native\sfml-graphics.redist.targets')" />
-    <Import Project="..\packages\sfml-system.redist.2.4.2.0\build\native\sfml-system.redist.targets" Condition="Exists('..\packages\sfml-system.redist.2.4.2.0\build\native\sfml-system.redist.targets')" />
-    <Import Project="..\packages\sfml-system.2.4.2.0\build\native\sfml-system.targets" Condition="Exists('..\packages\sfml-system.2.4.2.0\build\native\sfml-system.targets')" />
-    <Import Project="..\packages\sfml-window.redist.2.4.2.0\build\native\sfml-window.redist.targets" Condition="Exists('..\packages\sfml-window.redist.2.4.2.0\build\native\sfml-window.redist.targets')" />
-    <Import Project="..\packages\sfml-window.2.4.2.0\build\native\sfml-window.targets" Condition="Exists('..\packages\sfml-window.2.4.2.0\build\native\sfml-window.targets')" />
-    <Import Project="..\packages\sfml-graphics.2.4.2.0\build\native\sfml-graphics.targets" Condition="Exists('..\packages\sfml-graphics.2.4.2.0\build\native\sfml-graphics.targets')" />
-  </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>Данный проект ссылается на пакеты NuGet, отсутствующие на этом компьютере. Используйте восстановление пакетов NuGet, чтобы скачать их.  Дополнительную информацию см. по адресу: http://go.microsoft.com/fwlink/?LinkID=322105. Отсутствует следующий файл: {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\sfml-graphics.redist.2.4.2.0\build\native\sfml-graphics.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\sfml-graphics.redist.2.4.2.0\build\native\sfml-graphics.redist.targets'))" />
-    <Error Condition="!Exists('..\packages\sfml-system.redist.2.4.2.0\build\native\sfml-system.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\sfml-system.redist.2.4.2.0\build\native\sfml-system.redist.targets'))" />
-    <Error Condition="!Exists('..\packages\sfml-system.2.4.2.0\build\native\sfml-system.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\sfml-system.2.4.2.0\build\native\sfml-system.targets'))" />
-    <Error Condition="!Exists('..\packages\sfml-window.redist.2.4.2.0\build\native\sfml-window.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\sfml-window.redist.2.4.2.0\build\native\sfml-window.redist.targets'))" />
-    <Error Condition="!Exists('..\packages\sfml-window.2.4.2.0\build\native\sfml-window.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\sfml-window.2.4.2.0\build\native\sfml-window.targets'))" />
-    <Error Condition="!Exists('..\packages\sfml-graphics.2.4.2.0\build\native\sfml-graphics.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\sfml-graphics.2.4.2.0\build\native\sfml-graphics.targets'))" />
-  </Target>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

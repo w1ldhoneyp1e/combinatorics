@@ -2,23 +2,35 @@
 #include <vector>
 #include "DelaunayTriangulation.h"
 #include "Draw.h"
+#include <fstream>
+#include <iostream>
 
-int main() {
-    DelaunayTriangulation dt;
-    int n;
-    double x, y;
-    
-    std::cin >> n;
-    
-    for (int i = 0; i < n; i++) {
-        std::cin >> x >> y;
-        dt.AddVertex(x, y);
+int main() 
+{
+    std::ifstream input("input.txt");
+    if (!input.is_open()) 
+    {
+        std::cout << "Cannot open input.txt" << std::endl;
+        return 1;
     }
+
+    int n;
+    input >> n;
+
+    DelaunayTriangulation triangulation;
     
-    dt.Triangulate();
+    for (int i = 0; i < n; i++) 
+    {
+        double x, y;
+        input >> x >> y;
+        triangulation.AddVertex(x, y);
+    }
+
+    input.close();
+    triangulation.Triangulate();
     
-    Draw draw(dt);
+    Draw draw(triangulation);
     draw.Print();
-    
+
     return 0;
 }
