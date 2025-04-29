@@ -1,2 +1,2 @@
 Searching for articulation points:
-Articulation points:none
+Articulation points: none

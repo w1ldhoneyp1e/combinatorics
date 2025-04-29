@@ -176,7 +176,7 @@ public:
             outFile << "\nArticulation points:";
             if (articulationPoints.empty()) 
             {
-                outFile << "none\n";
+                outFile << " none\n";
             } else {
                 for (int point : articulationPoints) 
                 {
