@@ -98,7 +98,7 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
     std::cout << "P2: " << P2->x << " " << P2->y << std::endl;
     std::cout << "P3: " << P3->x << " " << P3->y << std::endl;
     Edge* baseLine = new Edge(P0, P1);
-    
+
     while (true) {
         Vertex* delaunayNeighbor = FindDelaunayNeighbor(baseLine, result);
         std::cout << "delaunayNeighbor: " << delaunayNeighbor->x << " " << delaunayNeighbor->y << std::endl;
@@ -125,7 +125,7 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
         }
 
         if (oldV1 == baseLine->v1 && oldV2 == baseLine->v2) {
-                break;
+            break;
         }
     }
 
@@ -229,15 +229,28 @@ std::vector<Face> DelaunayTriangulation::HandleFourPoints(std::vector<Vertex>& p
     Vertex* v3 = nullptr;
     Vertex* v4 = nullptr;
 
+    double minY = std::numeric_limits<double>::infinity();
+    int topIndex = 0;
+    for (int i = 0; i < 4; i++) {
+        if (points[i].y < minY) {
+            minY = points[i].y;
+            topIndex = i;
+        }
+    }
+
     for (auto& vertex : vertices)
     {
-        if (std::abs(vertex.x - points[0].x) < 1e-10 && std::abs(vertex.y - points[0].y) < 1e-10) 
+        if (std::abs(vertex.x - points[topIndex].x) < 1e-10 && 
+            std::abs(vertex.y - points[topIndex].y) < 1e-10) 
             v1 = &vertex;
-        if (std::abs(vertex.x - points[1].x) < 1e-10 && std::abs(vertex.y - points[1].y) < 1e-10) 
+        if (std::abs(vertex.x - points[(topIndex + 1) % 4].x) < 1e-10 && 
+            std::abs(vertex.y - points[(topIndex + 1) % 4].y) < 1e-10) 
             v2 = &vertex;
-        if (std::abs(vertex.x - points[2].x) < 1e-10 && std::abs(vertex.y - points[2].y) < 1e-10) 
+        if (std::abs(vertex.x - points[(topIndex + 2) % 4].x) < 1e-10 && 
+            std::abs(vertex.y - points[(topIndex + 2) % 4].y) < 1e-10) 
             v3 = &vertex;
-        if (std::abs(vertex.x - points[3].x) < 1e-10 && std::abs(vertex.y - points[3].y) < 1e-10) 
+        if (std::abs(vertex.x - points[(topIndex + 3) % 4].x) < 1e-10 && 
+            std::abs(vertex.y - points[(topIndex + 3) % 4].y) < 1e-10) 
             v4 = &vertex;
     }
 
@@ -246,18 +259,31 @@ std::vector<Face> DelaunayTriangulation::HandleFourPoints(std::vector<Vertex>& p
         std::cout << "Error: Could not find vertices in the main vector" << std::endl;
         return result;
     }
+
+    std::vector<Vertex*> others = {v2, v3, v4};
+    std::sort(others.begin(), others.end(),
+        [v1](Vertex* a, Vertex* b) {
+            double angleA = std::atan2(a->y - v1->y, a->x - v1->x);
+            double angleB = std::atan2(b->y - v1->y, b->x - v1->x);
+            return angleA < angleB;
+        });
     
-    result.emplace_back(v1, v2, v3);
-    
-    Face& firstTriangle = result[0];
-    if (firstTriangle.IsDelaunay(*v4))
+    v2 = others[0];
+    v3 = others[1];
+    v4 = others[2];
+
+    double cross1 = (v3->x - v1->x) * (v4->y - v2->y) - (v3->y - v1->y) * (v4->x - v2->x);
+    double cross2 = (v4->x - v2->x) * (v1->y - v3->y) - (v4->y - v2->y) * (v1->x - v3->x);
+
+    if (cross1 * cross2 > 0) 
     {
-        result.emplace_back(v2, v3, v4);
+        result.emplace_back(v1, v2, v3);
+        result.emplace_back(v3, v4, v1);
     } 
     else 
     {
-        result.emplace_back(v1, v3, v4);
-        result.emplace_back(v1, v2, v4);
+        result.emplace_back(v2, v3, v4);
+        result.emplace_back(v4, v1, v2);
     }
     
     return result;
