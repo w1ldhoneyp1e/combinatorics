@@ -4,6 +4,8 @@
 #include "DelaunayTriangulation.h"
 #include "Draw.h"
 
+const double PI = 4 * std::atan(1);
+
 const std::vector<Vertex>& DelaunayTriangulation::GetVertices() const 
 {
     return vertices;
@@ -56,201 +58,166 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
     std::vector<Face> result = left;
     result.insert(result.end(), right.begin(), right.end());
 
-    Edge* baseEdge = FindBaseEdge(left, right);
-    if (!baseEdge) return result;
+    Vertex* P0 = nullptr;
+    Vertex* P1 = nullptr;
+    Vertex* P2 = nullptr;
+    Vertex* P3 = nullptr;
 
+    double minY_left = std::numeric_limits<double>::infinity();
+    double minY_right = std::numeric_limits<double>::infinity();
+
+    for (const Face& face : left) {
+        if (face.v1->y < minY_left) { P0 = face.v1; minY_left = face.v1->y; }
+        if (face.v2->y < minY_left) { P0 = face.v2; minY_left = face.v2->y; }
+        if (face.v3->y < minY_left) { P0 = face.v3; minY_left = face.v3->y; }
+    }
+
+    for (const Face& face : right) {
+        if (face.v1->y < minY_right) { P1 = face.v1; minY_right = face.v1->y; }
+        if (face.v2->y < minY_right) { P1 = face.v2; minY_right = face.v2->y; }
+        if (face.v3->y < minY_right) { P1 = face.v3; minY_right = face.v3->y; }
+    }
+
+    double maxY_left = -std::numeric_limits<double>::infinity();
+    double maxY_right = -std::numeric_limits<double>::infinity();
+
+    for (const Face& face : left) {
+        if (face.v1->y > maxY_left) { P2 = face.v1; maxY_left = face.v1->y; }
+        if (face.v2->y > maxY_left) { P2 = face.v2; maxY_left = face.v2->y; }
+        if (face.v3->y > maxY_left) { P2 = face.v3; maxY_left = face.v3->y; }
+    }
+
+    for (const Face& face : right) {
+        if (face.v1->y > maxY_right) { P3 = face.v1; maxY_right = face.v1->y; }
+        if (face.v2->y > maxY_right) { P3 = face.v2; maxY_right = face.v2->y; }
+        if (face.v3->y > maxY_right) { P3 = face.v3; maxY_right = face.v3->y; }
+    }
+
+    std::cout << "P0: " << P0->x << " " << P0->y << std::endl;
+    std::cout << "P1: " << P1->x << " " << P1->y << std::endl;
+    std::cout << "P2: " << P2->x << " " << P2->y << std::endl;
+    std::cout << "P3: " << P3->x << " " << P3->y << std::endl;
+    Edge* baseLine = new Edge(P0, P1);
+    
     while (true) {
-        Vertex* topCandidate = FindTopCandidate(baseEdge, result);
-        if (!topCandidate) break;
+        Vertex* delaunayNeighbor = FindDelaunayNeighbor(baseLine, result);
+        std::cout << "delaunayNeighbor: " << delaunayNeighbor->x << " " << delaunayNeighbor->y << std::endl;
+        if (!delaunayNeighbor) break;
 
-        if (!IsDelaunayEdge(baseEdge, topCandidate, result)) 
-        {
-            FlipEdge(baseEdge, topCandidate, result);
-        }
-        else 
-        {
+        Face newFace(baseLine->v1, baseLine->v2, delaunayNeighbor);
+        result.push_back(newFace);
+
+        if ((baseLine->v1 == P2 && baseLine->v2 == P3) ||
+            (baseLine->v1 == P3 && baseLine->v2 == P2)) {
             break;
+        }
+
+        Vertex* oldV1 = baseLine->v1;
+        Vertex* oldV2 = baseLine->v2;
+
+        if (IsLowerPoint(delaunayNeighbor, baseLine->v1) && IsLowerPoint(delaunayNeighbor, baseLine->v2)) 
+        {
+            if (IsLowerPoint(baseLine->v1, baseLine->v2)) {
+                baseLine->v2 = delaunayNeighbor;
+            } else {
+                baseLine->v1 = delaunayNeighbor;
+            }
+        }
+
+        if (oldV1 == baseLine->v1 && oldV2 == baseLine->v2) {
+                break;
         }
     }
 
-    while (true) {
-        Vertex* bottomCandidate = FindBottomCandidate(baseEdge, result);
-        if (!bottomCandidate) break;
-
-        if (!IsDelaunayEdge(baseEdge, bottomCandidate, result)) 
-        {
-            FlipEdge(baseEdge, bottomCandidate, result);
-        }
-        else {
-            break;
-        }
-    }
-
+    delete baseLine;
     return result;
 }
 
-Edge* DelaunayTriangulation::FindBaseEdge(const std::vector<Face>& left, const std::vector<Face>& right) 
-{
-    Vertex* rightmostLeft = nullptr;
-    double maxX = -std::numeric_limits<double>::infinity();
-
-    for (const Face& face : left) {
-        if (face.v1->x > maxX) { rightmostLeft = face.v1; maxX = face.v1->x; }
-        if (face.v2->x > maxX) { rightmostLeft = face.v2; maxX = face.v2->x; }
-        if (face.v3->x > maxX) { rightmostLeft = face.v3; maxX = face.v3->x; }
-    }
-
-    Vertex* leftmostRight = nullptr;
-    double minX = std::numeric_limits<double>::infinity();
-
-    for (const Face& face : right) {
-        if (face.v1->x < minX) { leftmostRight = face.v1; minX = face.v1->x; }
-        if (face.v2->x < minX) { leftmostRight = face.v2; minX = face.v2->x; }
-        if (face.v3->x < minX) { leftmostRight = face.v3; minX = face.v3->x; }
-    }
-
-    return new Edge(rightmostLeft, leftmostRight);
+bool DelaunayTriangulation::IsLowerPoint(Vertex* a, Vertex* b) const {
+    return a->y > b->y;
 }
 
-bool DelaunayTriangulation::IsDelaunayEdge(Edge* edge, Vertex* v, const std::vector<Face>& triangulation) 
-{
-    for (const Face& face : triangulation) 
-    {
-        if ((face.e1 == edge || face.e2 == edge || face.e3 == edge) &&
-            face.ContainsVertex(v)) 
-        {
-            return face.IsDelaunay(*v);
-        }
-    }
-    return true;
-}
-
-void DelaunayTriangulation::FlipEdge(Edge* edge, Vertex* v, std::vector<Face>& triangulation) 
-{
-    Face* t1 = nullptr;
-    Face* t2 = nullptr;
-    size_t t1_idx = 0, t2_idx = 0;
-
-    for (size_t i = 0; i < triangulation.size(); ++i) 
-    {
-        if (triangulation[i].e1 == edge || triangulation[i].e2 == edge || triangulation[i].e3 == edge) 
-        {
-            if (!t1) 
-            {
-                t1 = &triangulation[i];
-                t1_idx = i;
-            }
-            else 
-            {
-                t2 = &triangulation[i];
-                t2_idx = i;
-                break;
-            }
-        }
-    }
-
-    if (!t1 || !t2) return;
-
-    Vertex* v1 = edge->v1;
-    Vertex* v2 = edge->v2;
-    Vertex* v3 = v;
-    Vertex* v4 = nullptr;
-
-    if (!t2->ContainsVertex(v)) 
-    {
-        if (t2->v1 != v1 && t2->v1 != v2) v4 = t2->v1;
-        else if (t2->v2 != v1 && t2->v2 != v2) v4 = t2->v2;
-        else v4 = t2->v3;
-    }
-
-    Face newFace1(v3, v4, v1);
-    Face newFace2(v3, v2, v4);
-
-    triangulation[t1_idx] = newFace1;
-    triangulation[t2_idx] = newFace2;
-
-    edge->v1 = v3;
-    edge->v2 = v4;
-}
-
-Vertex* DelaunayTriangulation::FindTopCandidate(Edge* edge, const std::vector<Face>& triangulation) 
-{
-    Vertex* bestCandidate = nullptr;
+Vertex* DelaunayTriangulation::FindDelaunayNeighbor(Edge* baseLine, const std::vector<Face>& triangulation) {
+    Vertex* bestVertex = nullptr;
     double maxAngle = -std::numeric_limits<double>::infinity();
 
-    for (const Face& face : triangulation) 
-    {
-        if (face.e1 == edge || face.e2 == edge || face.e3 == edge) 
-        {
-            Vertex* candidate = nullptr;
-            if (!face.ContainsVertex(edge->v1) && !face.ContainsVertex(edge->v2)) 
-            {
-                candidate = face.v1;
-            }
-            else if (!face.ContainsVertex(edge->v1) && !face.ContainsVertex(edge->v2)) 
-            {
-                candidate = face.v2;
-            }
-            else 
-            {
-                candidate = face.v3;
-            }
-
-            double angle = CalculateAngle(edge->v1, edge->v2, candidate);
-            if (angle > maxAngle) 
-            {
-                maxAngle = angle;
-                bestCandidate = candidate;
+    for (const Face& face : triangulation) {
+        for (Vertex* v : {face.v1, face.v2, face.v3}) {
+            if (v != baseLine->v1 && v != baseLine->v2) {
+                double crossProduct = (baseLine->v2->x - baseLine->v1->x) * (v->y - baseLine->v1->y) -
+                                    (baseLine->v2->y - baseLine->v1->y) * (v->x - baseLine->v1->x);
+                
+                if (crossProduct > 0) {
+                    double angle = CalculateBaseLineAngle(baseLine->v1, baseLine->v2, v);
+                    
+                    if (angle > maxAngle) {
+                        maxAngle = angle;
+                        bestVertex = v;
+                    }
+                }
             }
         }
     }
 
-    return bestCandidate;
+    return bestVertex;
 }
 
-Vertex* DelaunayTriangulation::FindBottomCandidate(Edge* edge, const std::vector<Face>& triangulation) 
-{
-    Vertex* bestCandidate = nullptr;
-    double minAngle = std::numeric_limits<double>::infinity();
-
-    for (const Face& face : triangulation) 
-    {
-        if (face.e1 == edge || face.e2 == edge || face.e3 == edge)
-        {
-            Vertex* candidate = nullptr;
-            if (!face.ContainsVertex(edge->v1) && !face.ContainsVertex(edge->v2)) 
-            {
-                candidate = face.v1;
-            }
-            else if (!face.ContainsVertex(edge->v1) && !face.ContainsVertex(edge->v2)) 
-            {
-                candidate = face.v2;
-            }
-            else 
-            {
-                candidate = face.v3;
-            }
-
-            double angle = CalculateAngle(edge->v1, edge->v2, candidate);
-            if (angle < minAngle) 
-            {
-                minAngle = angle;
-                bestCandidate = candidate;
-            }
-        }
-    }
-
-    return bestCandidate;
+double DelaunayTriangulation::CalculateBaseLineAngle(Vertex* v1, Vertex* v2, Vertex* p) {
+    double v1x = v1->x - p->x;
+    double v1y = v1->y - p->y;
+    
+    double v2x = v2->x - p->x;
+    double v2y = v2->y - p->y;
+    
+    double dot = v1x * v2x + v1y * v2y;
+    double len1 = std::sqrt(v1x * v1x + v1y * v1y);
+    double len2 = std::sqrt(v2x * v2x + v2y * v2y);
+    
+    return std::acos(dot / (len1 * len2));
 }
 
-double DelaunayTriangulation::CalculateAngle(Vertex* v1, Vertex* v2, Vertex* v3) 
-{
-    double dx1 = v2->x - v1->x;
-    double dy1 = v2->y - v1->y;
-    double dx2 = v3->x - v1->x;
-    double dy2 = v3->y - v1->y;
+void DelaunayTriangulation::RemoveConflictingTriangles(std::vector<Face>& triangulation, 
+                                                      Edge* baseLine, Vertex* newVertex) {
+    triangulation.erase(
+        std::remove_if(triangulation.begin(), triangulation.end(),
+            [baseLine, newVertex](const Face& face) {
+                return face.ContainsVertex(baseLine->v1) && 
+                       face.ContainsVertex(baseLine->v2) &&
+                       face.ContainsVertex(newVertex);
+            }
+        ),
+        triangulation.end()
+    );
+}
 
-    return std::atan2(dx1 * dy2 - dy1 * dx2, dx1 * dx2 + dy1 * dy2);
+bool DelaunayTriangulation::IsLeftOfLine(Vertex* a, Vertex* b, Vertex* c) {
+    return ((b->x - a->x) * (c->y - a->y) - (b->y - a->y) * (c->x - a->x)) > 0;
+}
+
+bool DelaunayTriangulation::IsHigherTangent(Vertex* a, Vertex* b, Vertex* c) {
+    return IsLeftOfLine(a, b, c);
+}
+
+bool DelaunayTriangulation::IsLowerTangent(Vertex* a, Vertex* b, Vertex* c) {
+    return !IsLeftOfLine(a, b, c);
+}
+
+double DelaunayTriangulation::CalculateCircumradius(Vertex* a, Vertex* b, Vertex* c) {
+    double ax = a->x, ay = a->y;
+    double bx = b->x, by = b->y;
+    double cx = c->x, cy = c->y;
+
+    double D = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by));
+    if (std::abs(D) < 1e-10) return std::numeric_limits<double>::infinity();
+
+    double x = ((ax * ax + ay * ay) * (by - cy) + 
+                (bx * bx + by * by) * (cy - ay) + 
+                (cx * cx + cy * cy) * (ay - by)) / D;
+    double y = ((ax * ax + ay * ay) * (cx - bx) + 
+                (bx * bx + by * by) * (ax - cx) + 
+                (cx * cx + cy * cy) * (bx - ax)) / D;
+
+    return std::hypot(x - ax, y - ay);
 }
 
 std::vector<Face> DelaunayTriangulation::HandleFourPoints(std::vector<Vertex>& points) 
