@@ -55,6 +55,10 @@ std::vector<Face> DelaunayTriangulation::CreateBaseTriangulation(std::vector<Ver
 
 std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, const std::vector<Face>& right) 
 {
+    std::cout << "\n=== Starting Merge ===\n";
+    std::cout << "Left triangulation has " << left.size() << " faces\n";
+    std::cout << "Right triangulation has " << right.size() << " faces\n";
+
     std::vector<Face> result = left;
     result.insert(result.end(), right.begin(), right.end());
 
@@ -93,24 +97,41 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
         if (face.v3->y > maxY_right) { P3 = face.v3; maxY_right = face.v3->y; }
     }
 
-    std::cout << "P0: " << P0->x << " " << P0->y << std::endl;
-    std::cout << "P1: " << P1->x << " " << P1->y << std::endl;
-    std::cout << "P2: " << P2->x << " " << P2->y << std::endl;
-    std::cout << "P3: " << P3->x << " " << P3->y << std::endl;
+    std::cout << "\nBase points found:";
+    std::cout << "\nLower base line: P0(" << P0->x << "," << P0->y << ") -> P1(" << P1->x << "," << P1->y << ")";
+    std::cout << "\nUpper base line: P2(" << P2->x << "," << P2->y << ") -> P3(" << P3->x << "," << P3->y << ")\n";
+
     Edge* baseLine = new Edge(P0, P1);
+    int iterationCount = 0;
 
     while (true) {
+        iterationCount++;
+        std::cout << "\n--- Iteration " << iterationCount << " ---";
+        std::cout << "\nCurrent baseline: (" << baseLine->v1->x << "," << baseLine->v1->y 
+                  << ") -> (" << baseLine->v2->x << "," << baseLine->v2->y << ")" << std::endl;
+        
         Vertex* delaunayNeighbor = FindDelaunayNeighbor(baseLine, result);
-        std::cout << "delaunayNeighbor: " << delaunayNeighbor->x << " " << delaunayNeighbor->y << std::endl;
-        if (!delaunayNeighbor) break;
+        if (!delaunayNeighbor) {
+            std::cout << "No Delaunay neighbor found, stopping" << std::endl;
+            break;
+        }
+
+        std::cout << "Found Delaunay neighbor: (" << delaunayNeighbor->x << "," << delaunayNeighbor->y << ")" << std::endl;
+
+        RemoveConflictingTriangles(result, baseLine, delaunayNeighbor);
 
         Face newFace(baseLine->v1, baseLine->v2, delaunayNeighbor);
         result.push_back(newFace);
+        std::cout << "Added new triangle: (" 
+                  << newFace.v1->x << "," << newFace.v1->y << ") - ("
+                  << newFace.v2->x << "," << newFace.v2->y << ") - ("
+                  << newFace.v3->x << "," << newFace.v3->y << ")" << std::endl;
 
         if ((baseLine->v1 == P2 && baseLine->v2 == P3) ||
             (baseLine->v1 == P3 && baseLine->v2 == P2)) {
-            break;
-        }
+            std::cout << "Reached upper base line, stopping" << std::endl;
+                break;
+            }
 
         Vertex* oldV1 = baseLine->v1;
         Vertex* oldV2 = baseLine->v2;
@@ -125,9 +146,16 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
         }
 
         if (oldV1 == baseLine->v1 && oldV2 == baseLine->v2) {
+            std::cout << "Baseline didn't change, stopping" << std::endl;
             break;
         }
+
+        std::cout << "Updated baseline to: (" << baseLine->v1->x << "," << baseLine->v1->y 
+                  << ") -> (" << baseLine->v2->x << "," << baseLine->v2->y << ")" << std::endl;
     }
+
+    std::cout << "\n=== Merge completed ===\n";
+    std::cout << "Final triangulation has " << result.size() << " faces\n";
 
     delete baseLine;
     return result;
@@ -150,8 +178,8 @@ Vertex* DelaunayTriangulation::FindDelaunayNeighbor(Edge* baseLine, const std::v
                 if (crossProduct > 0) {
                     double angle = CalculateBaseLineAngle(baseLine->v1, baseLine->v2, v);
                     
-                    if (angle > maxAngle) {
-                        maxAngle = angle;
+            if (angle > maxAngle) {
+                maxAngle = angle;
                         bestVertex = v;
                     }
                 }
@@ -344,4 +372,38 @@ void DelaunayTriangulation::Triangulate()
 {
     std::sort(vertices.begin(), vertices.end());
     faces = DivideAndConquer(vertices);
+}
+
+void DelaunayTriangulation::GenerateRandomPoints(int count, float scale, float offsetX, float offsetY, 
+                                               int windowWidth, int windowHeight) 
+{
+    vertices.clear();
+    faces.clear();
+
+    std::mt19937 rng(std::time(nullptr));
+    std::uniform_real_distribution<double> distX(-40.0, 40.0);
+    std::uniform_real_distribution<double> distY(-30.0, 30.0);
+
+    std::set<std::pair<double, double>> uniquePoints;
+
+    while (uniquePoints.size() < count) {
+        double x = std::round(distX(rng) * 10.0) / 10.0;
+        double y = std::round(distY(rng) * 10.0) / 10.0;
+
+        float screenX = x * scale + offsetX;
+        float screenY = -y * scale + offsetY;
+
+        if (screenX >= 0 && screenX <= windowWidth &&
+            screenY >= 0 && screenY <= windowHeight) {
+            if (uniquePoints.insert({x, y}).second) {
+                AddVertex(x, y);
+                std::cout << "Generated point: " << x << "," << y << std::endl;
+            }
+        }
+    }
+
+    std::cout << "\nGenerated " << vertices.size() << " points:\n";
+    for (const auto& v : vertices) {
+        std::cout << v.x << "," << v.y << std::endl;
+    }
 }

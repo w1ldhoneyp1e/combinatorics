@@ -4,6 +4,9 @@
 #include <vector>
 #include <iostream>
 #include "Face.h"
+#include <cmath>
+#include <set>
+#include <random>
 
 class DelaunayTriangulation 
 {
@@ -29,5 +32,7 @@ public:
     const std::vector<Face>& GetFaces() const;
     void AddVertex(double x, double y);
     void Triangulate();
+    void GenerateRandomPoints(int count, float scale, float offsetX, float offsetY, 
+                             int windowWidth, int windowHeight);
 };
 
