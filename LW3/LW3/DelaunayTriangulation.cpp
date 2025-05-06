@@ -129,14 +129,14 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
 
         if ((baseLine->v1 == P2 && baseLine->v2 == P3) ||
             (baseLine->v1 == P3 && baseLine->v2 == P2)) {
-            std::cout << "Reached upper base line, stopping" << std::endl;
+            std::cout << "Reached lower base line, stopping" << std::endl;
                 break;
-            }
+        }
 
         Vertex* oldV1 = baseLine->v1;
         Vertex* oldV2 = baseLine->v2;
 
-        if (IsLowerPoint(delaunayNeighbor, baseLine->v1) && IsLowerPoint(delaunayNeighbor, baseLine->v2)) 
+        if (IsLowerPoint(delaunayNeighbor, baseLine->v1) || IsLowerPoint(delaunayNeighbor, baseLine->v2)) 
         {
             if (IsLowerPoint(baseLine->v1, baseLine->v2)) {
                 baseLine->v2 = delaunayNeighbor;
@@ -161,7 +161,8 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
     return result;
 }
 
-bool DelaunayTriangulation::IsLowerPoint(Vertex* a, Vertex* b) const {
+bool DelaunayTriangulation::IsLowerPoint(Vertex* a, Vertex* b) const 
+{
     return a->y > b->y;
 }
 
@@ -169,22 +170,52 @@ Vertex* DelaunayTriangulation::FindDelaunayNeighbor(Edge* baseLine, const std::v
     Vertex* bestVertex = nullptr;
     double maxAngle = -std::numeric_limits<double>::infinity();
 
+    std::cout << "\nSearching for Delaunay neighbor for baseline: ("
+              << baseLine->v1->x << "," << baseLine->v1->y << ") -> ("
+              << baseLine->v2->x << "," << baseLine->v2->y << ")\n";
+
+    std::set<Vertex*, Vertex::VertexPtrCompare> allVertices;
     for (const Face& face : triangulation) {
-        for (Vertex* v : {face.v1, face.v2, face.v3}) {
-            if (v != baseLine->v1 && v != baseLine->v2) {
-                double crossProduct = (baseLine->v2->x - baseLine->v1->x) * (v->y - baseLine->v1->y) -
-                                    (baseLine->v2->y - baseLine->v1->y) * (v->x - baseLine->v1->x);
+        allVertices.insert(face.v1);
+        allVertices.insert(face.v2);
+        allVertices.insert(face.v3);
+    }
+
+    std::cout << "Found " << allVertices.size() << " unique vertices to check\n";
+
+    int candidateCount = 0;
+    for (Vertex* v : allVertices) {
+        if (v != baseLine->v1 && v != baseLine->v2) {
+            double direction = (baseLine->v2->x - baseLine->v1->x) * (v->y - baseLine->v1->y) -
+                             (baseLine->v2->y - baseLine->v1->y) * (v->x - baseLine->v1->x);
+            
+            std::cout << "Checking vertex (" << v->x << "," << v->y << "):\n";
+            std::cout << "  Direction value: " << direction << "\n";
+            
+            if (direction > 0) {
+                candidateCount++;
+                double angle = CalculateBaseLineAngle(baseLine->v1, baseLine->v2, v);
+                std::cout << "  Valid candidate! Angle: " << angle * 180.0 / PI << " degrees\n";
                 
-                if (crossProduct > 0) {
-                    double angle = CalculateBaseLineAngle(baseLine->v1, baseLine->v2, v);
-                    
-            if (angle > maxAngle) {
-                maxAngle = angle;
-                        bestVertex = v;
-                    }
+                if (angle > maxAngle) {
+                    maxAngle = angle;
+                    bestVertex = v;
+                    std::cout << "  New best vertex found!\n";
                 }
+            } else {
+                std::cout << "  Skipped: point is not on the correct side of baseline\n";
             }
         }
+    }
+
+    std::cout << "\nChecked " << allVertices.size() << " vertices, found " 
+              << candidateCount << " valid candidates\n";
+    
+    if (bestVertex) {
+        std::cout << "Selected best vertex: (" << bestVertex->x << "," << bestVertex->y 
+                  << ") with angle " << maxAngle * 180.0 / PI << " degrees\n";
+    } else {
+        std::cout << "No valid vertex found!\n";
     }
 
     return bestVertex;
@@ -368,7 +399,7 @@ void DelaunayTriangulation::AddVertex(double x, double y)
     vertices.emplace_back(x, y, vertices.size());
 }
 
-void DelaunayTriangulation::Triangulate() 
+void DelaunayTriangulation::Triangulate()
 {
     std::sort(vertices.begin(), vertices.end());
     faces = DivideAndConquer(vertices);

@@ -27,7 +27,7 @@ int main()
     }
 
     input.close();
-    triangulation.GenerateRandomPoints(8, 10.0f, 400.0f, 300.0f, 800, 600);
+    //triangulation.GenerateRandomPoints(8, 10.0f, 400.0f, 300.0f, 800, 600);
     triangulation.Triangulate();
     
     Draw draw(triangulation);
