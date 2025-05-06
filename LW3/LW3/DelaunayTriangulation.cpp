@@ -59,6 +59,20 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
     std::cout << "Left triangulation has " << left.size() << " faces\n";
     std::cout << "Right triangulation has " << right.size() << " faces\n";
 
+    std::set<Vertex*, Vertex::VertexPtrCompare> allVertices;
+    for (const Face& face : left) {
+        allVertices.insert(face.v1);
+        allVertices.insert(face.v2);
+        allVertices.insert(face.v3);
+    }
+    for (const Face& face : right) {
+        allVertices.insert(face.v1);
+        allVertices.insert(face.v2);
+        allVertices.insert(face.v3);
+    }
+
+    std::cout << "Total unique vertices: " << allVertices.size() << std::endl;
+
     std::vector<Face> result = left;
     result.insert(result.end(), right.begin(), right.end());
 
@@ -110,7 +124,7 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
         std::cout << "\nCurrent baseline: (" << baseLine->v1->x << "," << baseLine->v1->y 
                   << ") -> (" << baseLine->v2->x << "," << baseLine->v2->y << ")" << std::endl;
         
-        Vertex* delaunayNeighbor = FindDelaunayNeighbor(baseLine, result);
+        Vertex* delaunayNeighbor = FindDelaunayNeighbor(baseLine, allVertices);
         if (!delaunayNeighbor) {
             std::cout << "No Delaunay neighbor found, stopping" << std::endl;
             break;
@@ -166,7 +180,8 @@ bool DelaunayTriangulation::IsLowerPoint(Vertex* a, Vertex* b) const
     return a->y > b->y;
 }
 
-Vertex* DelaunayTriangulation::FindDelaunayNeighbor(Edge* baseLine, const std::vector<Face>& triangulation) 
+Vertex* DelaunayTriangulation::FindDelaunayNeighbor(Edge* baseLine, 
+    const std::set<Vertex*, Vertex::VertexPtrCompare>& allVertices) 
 {
     Vertex* bestVertex = nullptr;
     double maxAngle = -std::numeric_limits<double>::infinity();
@@ -175,14 +190,7 @@ Vertex* DelaunayTriangulation::FindDelaunayNeighbor(Edge* baseLine, const std::v
               << baseLine->v1->x << "," << baseLine->v1->y << ") -> ("
               << baseLine->v2->x << "," << baseLine->v2->y << ")\n";
 
-    std::set<Vertex*, Vertex::VertexPtrCompare> allVertices;
-    for (const Face& face : triangulation) {
-        allVertices.insert(face.v1);
-        allVertices.insert(face.v2);
-        allVertices.insert(face.v3);
-    }
-
-    std::cout << "Found " << allVertices.size() << " unique vertices to check\n";
+    std::cout << "Checking " << allVertices.size() << " vertices\n";
 
     int candidateCount = 0;
     for (Vertex* v : allVertices) {

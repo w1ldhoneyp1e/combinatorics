@@ -19,7 +19,7 @@ private:
     std::vector<Face> Merge(const std::vector<Face>& left, const std::vector<Face>& right);
     bool IsLowerPoint(Vertex* a, Vertex* b) const;
     std::vector<Face> DivideAndConquer(std::vector<Vertex>& points);
-    Vertex* FindDelaunayNeighbor(Edge* baseLine, const std::vector<Face>& triangulation);
+    Vertex* FindDelaunayNeighbor(Edge* baseLine, const std::set<Vertex*, Vertex::VertexPtrCompare>& vertices);
     void RemoveConflictingTriangles(std::vector<Face>& triangulation, Edge* baseLine, Vertex* newVertex);
     bool IsLeftOfLine(Vertex* a, Vertex* b, Vertex* c);
     bool IsHigherTangent(Vertex* a, Vertex* b, Vertex* c);

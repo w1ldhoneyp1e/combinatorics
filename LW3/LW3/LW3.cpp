@@ -19,15 +19,15 @@ int main()
 
     DelaunayTriangulation triangulation;
     
-    for (int i = 0; i < n; i++) 
-    {
-        double x, y;
-        input >> x >> y;
-        triangulation.AddVertex(x, y);
-    }
+    // for (int i = 0; i < n; i++) 
+    // {
+    //     double x, y;
+    //     input >> x >> y;
+    //     triangulation.AddVertex(x, y);
+    // }
 
     input.close();
-    //triangulation.GenerateRandomPoints(8, 10.0f, 400.0f, 300.0f, 800, 600);
+    triangulation.GenerateRandomPoints(6, 10.0f, 400.0f, 300.0f, 800, 600);
     triangulation.Triangulate();
     
     Draw draw(triangulation);
