@@ -166,7 +166,8 @@ bool DelaunayTriangulation::IsLowerPoint(Vertex* a, Vertex* b) const
     return a->y > b->y;
 }
 
-Vertex* DelaunayTriangulation::FindDelaunayNeighbor(Edge* baseLine, const std::vector<Face>& triangulation) {
+Vertex* DelaunayTriangulation::FindDelaunayNeighbor(Edge* baseLine, const std::vector<Face>& triangulation) 
+{
     Vertex* bestVertex = nullptr;
     double maxAngle = -std::numeric_limits<double>::infinity();
 
@@ -221,7 +222,8 @@ Vertex* DelaunayTriangulation::FindDelaunayNeighbor(Edge* baseLine, const std::v
     return bestVertex;
 }
 
-double DelaunayTriangulation::CalculateBaseLineAngle(Vertex* v1, Vertex* v2, Vertex* p) {
+double DelaunayTriangulation::CalculateBaseLineAngle(Vertex* v1, Vertex* v2, Vertex* p) 
+{
     double v1x = v1->x - p->x;
     double v1y = v1->y - p->y;
     
@@ -236,13 +238,40 @@ double DelaunayTriangulation::CalculateBaseLineAngle(Vertex* v1, Vertex* v2, Ver
 }
 
 void DelaunayTriangulation::RemoveConflictingTriangles(std::vector<Face>& triangulation, 
-                                                      Edge* baseLine, Vertex* newVertex) {
+                                                      Edge* baseLine, Vertex* newVertex) 
+{
+    std::cout << "\nChecking for conflicting triangles with new edge: ("
+              << baseLine->v1->x << "," << baseLine->v1->y << ") -> ("
+              << newVertex->x << "," << newVertex->y << ")" << std::endl;
+
     triangulation.erase(
         std::remove_if(triangulation.begin(), triangulation.end(),
-            [baseLine, newVertex](const Face& face) {
-                return face.ContainsVertex(baseLine->v1) && 
-                       face.ContainsVertex(baseLine->v2) &&
-                       face.ContainsVertex(newVertex);
+            [this, baseLine, newVertex](const Face& face) {
+                bool conflicts = false;
+                
+                if (EdgesIntersect(face.v1, face.v2, baseLine->v1, newVertex)) {
+                    std::cout << "Edge (" << face.v1->x << "," << face.v1->y << ") -> ("
+                            << face.v2->x << "," << face.v2->y << ") intersects\n";
+                    conflicts = true;
+                }
+                if (EdgesIntersect(face.v2, face.v3, baseLine->v1, newVertex)) {
+                    std::cout << "Edge (" << face.v2->x << "," << face.v2->y << ") -> ("
+                            << face.v3->x << "," << face.v3->y << ") intersects\n";
+                    conflicts = true;
+                }
+                if (EdgesIntersect(face.v3, face.v1, baseLine->v1, newVertex)) {
+                    std::cout << "Edge (" << face.v3->x << "," << face.v3->y << ") -> ("
+                            << face.v1->x << "," << face.v1->y << ") intersects\n";
+                    conflicts = true;
+                }
+
+                if (conflicts) {
+                    std::cout << "Removing conflicting triangle: ("
+                            << face.v1->x << "," << face.v1->y << "), ("
+                            << face.v2->x << "," << face.v2->y << "), ("
+                            << face.v3->x << "," << face.v3->y << ")\n";
+                }
+                return conflicts;
             }
         ),
         triangulation.end()
@@ -437,4 +466,23 @@ void DelaunayTriangulation::GenerateRandomPoints(int count, float scale, float o
     for (const auto& v : vertices) {
         std::cout << v.x << "," << v.y << std::endl;
     }
+}
+
+bool DelaunayTriangulation::EdgesIntersect(Vertex* a1, Vertex* a2, Vertex* b1, Vertex* b2) const 
+{
+    if (a1 == b1 || a1 == b2 || a2 == b1 || a2 == b2) {
+        return false;
+    }
+
+    double d1 = ((b2->x - b1->x) * (a1->y - b1->y) - (b2->y - b1->y) * (a1->x - b1->x));
+    double d2 = ((b2->x - b1->x) * (a2->y - b1->y) - (b2->y - b1->y) * (a2->x - b1->x));
+    double d3 = ((a2->x - a1->x) * (b1->y - a1->y) - (a2->y - a1->y) * (b1->x - a1->x));
+    double d4 = ((a2->x - a1->x) * (b2->y - a1->y) - (a2->y - a1->y) * (b2->x - a1->x));
+
+    if (std::abs(d1) < 1e-10) return false;
+    if (std::abs(d2) < 1e-10) return false;
+    if (std::abs(d3) < 1e-10) return false;
+    if (std::abs(d4) < 1e-10) return false;
+
+    return (d1 * d2 < 0) && (d3 * d4 < 0);
 }
