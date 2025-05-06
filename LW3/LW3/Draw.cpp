@@ -12,6 +12,12 @@ void Draw::Print() const
     sf::RenderWindow window(videoMode, "Delaunay Triangulation");
     window.setFramerateLimit(60);
     
+    sf::Font font;
+    if (!font.loadFromFile("arial.ttf")) {
+        std::cout << "Error loading font" << std::endl;
+        return;
+    }
+    
     while (window.isOpen()) 
     {
         sf::Event event;
@@ -67,13 +73,24 @@ void Draw::Print() const
         
         for (const auto& vertex : triangulation.GetVertices()) 
         {
+            sf::Vector2f pos = ScalePoint(vertex, window);
+            
             sf::CircleShape point(5.0f);
             point.setFillColor(sf::Color::Red);
-            
-            sf::Vector2f pos = ScalePoint(vertex, window);
             point.setPosition(pos.x - point.getRadius(), pos.y - point.getRadius());
-            
             window.draw(point);
+            
+            sf::Text indexText;
+            indexText.setFont(font);
+            indexText.setString(std::to_string(vertex.index));
+            indexText.setCharacterSize(12);
+            indexText.setFillColor(sf::Color::Black);
+            
+            sf::FloatRect textRect = indexText.getLocalBounds();
+            indexText.setPosition(pos.x + point.getRadius() + 2, 
+                                pos.y - textRect.height/2);
+            
+            window.draw(indexText);
         }
         
         window.display();

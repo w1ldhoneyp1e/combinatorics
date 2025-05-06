@@ -198,7 +198,7 @@ Vertex* DelaunayTriangulation::FindDelaunayNeighbor(Edge* baseLine,
             double direction = (baseLine->v2->x - baseLine->v1->x) * (v->y - baseLine->v1->y) -
                              (baseLine->v2->y - baseLine->v1->y) * (v->x - baseLine->v1->x);
             
-            std::cout << "Checking vertex (" << v->x << "," << v->y << "):\n";
+            std::cout << "Checking vertex [" << v->index << "] (" << v->x << "," << v->y << "):\n";
             std::cout << "  Direction value: " << direction << "\n";
             
             if (direction > 0) {
@@ -258,18 +258,21 @@ void DelaunayTriangulation::RemoveConflictingTriangles(std::vector<Face>& triang
                 bool conflicts = false;
                 
                 if (EdgesIntersect(face.v1, face.v2, baseLine->v1, newVertex)) {
-                    std::cout << "Edge (" << face.v1->x << "," << face.v1->y << ") -> ("
-                            << face.v2->x << "," << face.v2->y << ") intersects\n";
+                    std::cout << "Edge [" << face.v1->index << "]->["
+                              << face.v2->index << "] (" << face.v1->x << "," << face.v1->y << ") -> ("
+                              << face.v2->x << "," << face.v2->y << ") intersects\n";
                     conflicts = true;
                 }
                 if (EdgesIntersect(face.v2, face.v3, baseLine->v1, newVertex)) {
-                    std::cout << "Edge (" << face.v2->x << "," << face.v2->y << ") -> ("
-                            << face.v3->x << "," << face.v3->y << ") intersects\n";
+                    std::cout << "Edge [" << face.v2->index << "]->["
+                              << face.v3->index << "] (" << face.v2->x << "," << face.v2->y << ") -> ("
+                              << face.v3->x << "," << face.v3->y << ") intersects\n";
                     conflicts = true;
                 }
                 if (EdgesIntersect(face.v3, face.v1, baseLine->v1, newVertex)) {
-                    std::cout << "Edge (" << face.v3->x << "," << face.v3->y << ") -> ("
-                            << face.v1->x << "," << face.v1->y << ") intersects\n";
+                    std::cout << "Edge [" << face.v3->index << "]->["
+                              << face.v1->index << "] (" << face.v3->x << "," << face.v3->y << ") -> ("
+                              << face.v1->x << "," << face.v1->y << ") intersects\n";
                     conflicts = true;
                 }
 
@@ -464,15 +467,16 @@ void DelaunayTriangulation::GenerateRandomPoints(int count, float scale, float o
         if (screenX >= 0 && screenX <= windowWidth &&
             screenY >= 0 && screenY <= windowHeight) {
             if (uniquePoints.insert({x, y}).second) {
+                size_t idx = vertices.size();
                 AddVertex(x, y);
-                std::cout << "Generated point: " << x << "," << y << std::endl;
+                std::cout << "Generated point [" << idx << "]: " << x << "," << y << std::endl;
             }
         }
     }
 
     std::cout << "\nGenerated " << vertices.size() << " points:\n";
     for (const auto& v : vertices) {
-        std::cout << v.x << "," << v.y << std::endl;
+        std::cout << "[" << v.index << "]: " << v.x << "," << v.y << std::endl;
     }
 }
 
