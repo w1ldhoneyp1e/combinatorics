@@ -88,7 +88,11 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
         std::cout << "\nCurrent baseline: [" << baseLine->v1->index << "](" << baseLine->v1->x << "," << baseLine->v1->y 
                   << ") -> [" << baseLine->v2->index << "](" << baseLine->v2->x << "," << baseLine->v2->y << ")" << std::endl;
         
-        Vertex* delaunayNeighbor = FindDelaunayNeighbor(baseLine, leftVertices);
+        std::set<Vertex*, Vertex::VertexPtrCompare> allVertices;
+        allVertices.insert(leftVertices.begin(), leftVertices.end());
+        allVertices.insert(rightVertices.begin(), rightVertices.end());
+        
+        Vertex* delaunayNeighbor = FindDelaunayNeighbor(baseLine, allVertices);
         if (!delaunayNeighbor) {
             std::cout << "No Delaunay neighbor found, stopping" << std::endl;
             break;
@@ -564,7 +568,7 @@ void DelaunayTriangulation::FindTangents(const std::vector<Face>& left, const st
     for (Vertex* leftIt : leftVertices) {
         for (Vertex* rightIt : rightVertices) {
             if (IsValidUpperTangent(leftIt, rightIt, allVertices)) {
-                P0 = leftIt;  // Верхняя касательная
+                P0 = leftIt;
                 P1 = rightIt;
                 std::cout << "Found upper tangent: [" << P0->index << "] -> [" << P1->index << "]\n";
                 foundUpper = true;
@@ -579,7 +583,7 @@ void DelaunayTriangulation::FindTangents(const std::vector<Face>& left, const st
     for (Vertex* leftV : leftVertices) {
         for (Vertex* rightV : rightVertices) {
             if (IsValidLowerTangent(leftV, rightV, allVertices)) {
-                P2 = leftV;    // Нижняя касательная
+                P2 = leftV;
                 P3 = rightV;
                 std::cout << "Found lower tangent: [" << P2->index << "] -> [" << P3->index << "]\n";
                 foundLower = true;
