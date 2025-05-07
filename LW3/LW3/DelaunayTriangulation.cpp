@@ -101,7 +101,7 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
         std::cout << "Found Delaunay neighbor: [" << delaunayNeighbor->index << "](" 
                   << delaunayNeighbor->x << "," << delaunayNeighbor->y << ")" << std::endl;
 
-        RemoveConflictingTriangles(result, baseLine, delaunayNeighbor);
+        RemoveConflictingTriangles(result, baseLine, delaunayNeighbor, leftVertices);
 
         Face newFace(baseLine->v1, baseLine->v2, delaunayNeighbor);
         result.push_back(newFace);
@@ -220,11 +220,18 @@ double DelaunayTriangulation::CalculateBaseLineAngle(Vertex* v1, Vertex* v2, Ver
     return std::acos(dot / (len1 * len2));
 }
 
-void DelaunayTriangulation::RemoveConflictingTriangles(std::vector<Face>& triangulation, 
-                                                      Edge* baseLine, Vertex* newVertex) 
+void DelaunayTriangulation::RemoveConflictingTriangles(
+    std::vector<Face>& triangulation, 
+    Edge* baseLine, 
+    Vertex* newVertex,
+    const std::set<Vertex*, Vertex::VertexPtrCompare>& leftVertices)
 {
+    bool isInLeft = leftVertices.find(newVertex) != leftVertices.end();
+    
+    Vertex* baseVertex = isInLeft ? baseLine->v2 : baseLine->v1;
+    
     std::cout << "\nChecking for conflicting edges with new edge: ["
-              << baseLine->v1->index << "](" << baseLine->v1->x << "," << baseLine->v1->y << ") -> ["
+              << baseVertex->index << "](" << baseVertex->x << "," << baseVertex->y << ") -> ["
               << newVertex->index << "](" << newVertex->x << "," << newVertex->y << ")" << std::endl;
 
     std::set<EdgeInfo, EdgeInfoCompare> edges;
@@ -236,7 +243,7 @@ void DelaunayTriangulation::RemoveConflictingTriangles(std::vector<Face>& triang
 
     std::vector<EdgeInfo> edgesToRemove;
     for (const EdgeInfo& edge : edges) {
-        if (EdgesIntersect(edge.v1, edge.v2, baseLine->v1, newVertex)) {
+        if (EdgesIntersect(edge.v1, edge.v2, baseVertex, newVertex)) {
             std::cout << "Edge [" << edge.v1->index << "]->[" << edge.v2->index 
                       << "] intersects with new edge" << std::endl;
             edgesToRemove.push_back(edge);

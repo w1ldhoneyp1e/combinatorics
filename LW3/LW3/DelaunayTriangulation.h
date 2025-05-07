@@ -44,7 +44,10 @@ private:
     bool IsLowerPoint(Vertex* a, Vertex* b) const;
     std::vector<Face> DivideAndConquer(std::vector<Vertex>& points);
     Vertex* FindDelaunayNeighbor(Edge* baseLine, const std::set<Vertex*, Vertex::VertexPtrCompare>& vertices);
-    void RemoveConflictingTriangles(std::vector<Face>& triangulation, Edge* baseLine, Vertex* newVertex);
+    void RemoveConflictingTriangles(std::vector<Face>& triangulation,
+        Edge* baseLine,
+        Vertex* newVertex,
+        const std::set<Vertex*, Vertex::VertexPtrCompare>& leftVertices);
     bool IsLeftOfLine(Vertex* a, Vertex* b, Vertex* c);
     bool IsHigherTangent(Vertex* a, Vertex* b, Vertex* c);
     bool IsLowerTangent(Vertex* a, Vertex* b, Vertex* c);
