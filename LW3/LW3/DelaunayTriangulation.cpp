@@ -85,35 +85,83 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
     double minY_right = std::numeric_limits<double>::infinity();
 
     for (const Face& face : left) {
-        if (face.v1->y < minY_left) { P0 = face.v1; minY_left = face.v1->y; }
-        if (face.v2->y < minY_left) { P0 = face.v2; minY_left = face.v2->y; }
-        if (face.v3->y < minY_left) { P0 = face.v3; minY_left = face.v3->y; }
+        if (face.v1->y < minY_left) { 
+            P0 = face.v1; 
+            minY_left = face.v1->y;
+            std::cout << "Found new lowest left point [" << face.v1->index << "]\n";
+        }
+        if (face.v2->y < minY_left) { 
+            P0 = face.v2; 
+            minY_left = face.v2->y;
+            std::cout << "Found new lowest left point [" << face.v2->index << "]\n";
+        }
+        if (face.v3->y < minY_left) { 
+            P0 = face.v3; 
+            minY_left = face.v3->y;
+            std::cout << "Found new lowest left point [" << face.v3->index << "]\n";
+        }
     }
 
     for (const Face& face : right) {
-        if (face.v1->y < minY_right) { P1 = face.v1; minY_right = face.v1->y; }
-        if (face.v2->y < minY_right) { P1 = face.v2; minY_right = face.v2->y; }
-        if (face.v3->y < minY_right) { P1 = face.v3; minY_right = face.v3->y; }
+        if (face.v1->y < minY_right) { 
+            P1 = face.v1; 
+            minY_right = face.v1->y;
+            std::cout << "Found new lowest right point [" << face.v1->index << "]\n";
+        }
+        if (face.v2->y < minY_right) { 
+            P1 = face.v2; 
+            minY_right = face.v2->y;
+            std::cout << "Found new lowest right point [" << face.v2->index << "]\n";
+        }
+        if (face.v3->y < minY_right) { 
+            P1 = face.v3; 
+            minY_right = face.v3->y;
+            std::cout << "Found new lowest right point [" << face.v3->index << "]\n";
+        }
     }
 
     double maxY_left = -std::numeric_limits<double>::infinity();
     double maxY_right = -std::numeric_limits<double>::infinity();
 
     for (const Face& face : left) {
-        if (face.v1->y > maxY_left) { P2 = face.v1; maxY_left = face.v1->y; }
-        if (face.v2->y > maxY_left) { P2 = face.v2; maxY_left = face.v2->y; }
-        if (face.v3->y > maxY_left) { P2 = face.v3; maxY_left = face.v3->y; }
+        if (face.v1->y > maxY_left) { 
+            P2 = face.v1; 
+            maxY_left = face.v1->y;
+            std::cout << "Found new highest left point [" << face.v1->index << "]\n";
+        }
+        if (face.v2->y > maxY_left) { 
+            P2 = face.v2; 
+            maxY_left = face.v2->y;
+            std::cout << "Found new highest left point [" << face.v2->index << "]\n";
+        }
+        if (face.v3->y > maxY_left) { 
+            P2 = face.v3; 
+            maxY_left = face.v3->y;
+            std::cout << "Found new highest left point [" << face.v3->index << "]\n";
+        }
     }
 
     for (const Face& face : right) {
-        if (face.v1->y > maxY_right) { P3 = face.v1; maxY_right = face.v1->y; }
-        if (face.v2->y > maxY_right) { P3 = face.v2; maxY_right = face.v2->y; }
-        if (face.v3->y > maxY_right) { P3 = face.v3; maxY_right = face.v3->y; }
+        if (face.v1->y > maxY_right) { 
+            P3 = face.v1; 
+            maxY_right = face.v1->y;
+            std::cout << "Found new highest right point [" << face.v1->index << "]\n";
+        }
+        if (face.v2->y > maxY_right) { 
+            P3 = face.v2; 
+            maxY_right = face.v2->y;
+            std::cout << "Found new highest right point [" << face.v2->index << "]\n";
+        }
+        if (face.v3->y > maxY_right) { 
+            P3 = face.v3; 
+            maxY_right = face.v3->y;
+            std::cout << "Found new highest right point [" << face.v3->index << "]\n";
+        }
     }
 
     std::cout << "\nBase points found:";
-    std::cout << "\nLower base line: P0(" << P0->x << "," << P0->y << ") -> P1(" << P1->x << "," << P1->y << ")";
-    std::cout << "\nUpper base line: P2(" << P2->x << "," << P2->y << ") -> P3(" << P3->x << "," << P3->y << ")\n";
+    std::cout << "\nLower base line: P0[" << P0->index << "]" << " -> P1[" << P1->index << "]";
+    std::cout << "\nUpper base line: P2[" << P2->index << "]" << " -> P3[" << P3->index << "]";
 
     Edge* baseLine = new Edge(P0, P1);
     int iterationCount = 0;
@@ -121,8 +169,8 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
     while (true) {
         iterationCount++;
         std::cout << "\n--- Iteration " << iterationCount << " ---";
-        std::cout << "\nCurrent baseline: (" << baseLine->v1->x << "," << baseLine->v1->y 
-                  << ") -> (" << baseLine->v2->x << "," << baseLine->v2->y << ")" << std::endl;
+        std::cout << "\nCurrent baseline: [" << baseLine->v1->index << "](" << baseLine->v1->x << "," << baseLine->v1->y 
+                  << ") -> [" << baseLine->v2->index << "](" << baseLine->v2->x << "," << baseLine->v2->y << ")" << std::endl;
         
         Vertex* delaunayNeighbor = FindDelaunayNeighbor(baseLine, allVertices);
         if (!delaunayNeighbor) {
@@ -130,16 +178,17 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
             break;
         }
 
-        std::cout << "Found Delaunay neighbor: (" << delaunayNeighbor->x << "," << delaunayNeighbor->y << ")" << std::endl;
+        std::cout << "Found Delaunay neighbor: [" << delaunayNeighbor->index << "](" 
+                  << delaunayNeighbor->x << "," << delaunayNeighbor->y << ")" << std::endl;
 
         RemoveConflictingTriangles(result, baseLine, delaunayNeighbor);
 
         Face newFace(baseLine->v1, baseLine->v2, delaunayNeighbor);
         result.push_back(newFace);
-        std::cout << "Added new triangle: (" 
-                  << newFace.v1->x << "," << newFace.v1->y << ") - ("
-                  << newFace.v2->x << "," << newFace.v2->y << ") - ("
-                  << newFace.v3->x << "," << newFace.v3->y << ")" << std::endl;
+        std::cout << "Added new triangle: [" << newFace.v1->index << "](" 
+                  << newFace.v1->x << "," << newFace.v1->y << ") - ["
+                  << newFace.v2->index << "](" << newFace.v2->x << "," << newFace.v2->y << ") - ["
+                  << newFace.v3->index << "](" << newFace.v3->x << "," << newFace.v3->y << ")" << std::endl;
 
         if ((baseLine->v1 == P2 && baseLine->v2 == P3) ||
             (baseLine->v1 == P3 && baseLine->v2 == P2)) {
@@ -153,8 +202,12 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
         if (IsLowerPoint(delaunayNeighbor, baseLine->v1) || IsLowerPoint(delaunayNeighbor, baseLine->v2)) 
         {
             if (IsLowerPoint(baseLine->v1, baseLine->v2)) {
+                std::cout << "Setting new baseline: replacing v2[" << baseLine->v2->index 
+                          << "] with [" << delaunayNeighbor->index << "]" << std::endl;
                 baseLine->v2 = delaunayNeighbor;
             } else {
+                std::cout << "Setting new baseline: replacing v1[" << baseLine->v1->index 
+                          << "] with [" << delaunayNeighbor->index << "]" << std::endl;
                 baseLine->v1 = delaunayNeighbor;
             }
         }
@@ -164,8 +217,8 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
             break;
         }
 
-        std::cout << "Updated baseline to: (" << baseLine->v1->x << "," << baseLine->v1->y 
-                  << ") -> (" << baseLine->v2->x << "," << baseLine->v2->y << ")" << std::endl;
+        std::cout << "Updated baseline to: [" << baseLine->v1->index << "](" << baseLine->v1->x << "," << baseLine->v1->y 
+                  << ") -> [" << baseLine->v2->index << "](" << baseLine->v2->x << "," << baseLine->v2->y << ")" << std::endl;
     }
 
     std::cout << "\n=== Merge completed ===\n";
@@ -186,9 +239,9 @@ Vertex* DelaunayTriangulation::FindDelaunayNeighbor(Edge* baseLine,
     Vertex* bestVertex = nullptr;
     double maxAngle = -std::numeric_limits<double>::infinity();
 
-    std::cout << "\nSearching for Delaunay neighbor for baseline: ("
-              << baseLine->v1->x << "," << baseLine->v1->y << ") -> ("
-              << baseLine->v2->x << "," << baseLine->v2->y << ")\n";
+    std::cout << "\nSearching for Delaunay neighbor for baseline: ["
+              << baseLine->v1->index << "]" << " -> ["
+              << baseLine->v2->index << "]";
 
     std::cout << "Checking " << allVertices.size() << " vertices\n";
 
@@ -199,7 +252,7 @@ Vertex* DelaunayTriangulation::FindDelaunayNeighbor(Edge* baseLine,
                              (baseLine->v2->y - baseLine->v1->y) * (v->x - baseLine->v1->x);
             
             std::cout << "Checking vertex [" << v->index << "] (" << v->x << "," << v->y << "):\n";
-            std::cout << "  Direction value: " << direction << "\n";
+            std::cout << "  Direction: " << (direction > 0 ? "right" : "left") << "\n";
             
             if (direction > 0) {
                 candidateCount++;
@@ -221,7 +274,7 @@ Vertex* DelaunayTriangulation::FindDelaunayNeighbor(Edge* baseLine,
               << candidateCount << " valid candidates\n";
     
     if (bestVertex) {
-        std::cout << "Selected best vertex: (" << bestVertex->x << "," << bestVertex->y 
+        std::cout << "Selected best vertex: [" << bestVertex->index << "](" << bestVertex->x << "," << bestVertex->y 
                   << ") with angle " << maxAngle * 180.0 / PI << " degrees\n";
     } else {
         std::cout << "No valid vertex found!\n";
@@ -248,45 +301,69 @@ double DelaunayTriangulation::CalculateBaseLineAngle(Vertex* v1, Vertex* v2, Ver
 void DelaunayTriangulation::RemoveConflictingTriangles(std::vector<Face>& triangulation, 
                                                       Edge* baseLine, Vertex* newVertex) 
 {
-    std::cout << "\nChecking for conflicting triangles with new edge: ("
-              << baseLine->v1->x << "," << baseLine->v1->y << ") -> ("
-              << newVertex->x << "," << newVertex->y << ")" << std::endl;
+    std::cout << "\nChecking for conflicting edges with new edge: ["
+              << baseLine->v1->index << "](" << baseLine->v1->x << "," << baseLine->v1->y << ") -> ["
+              << newVertex->index << "](" << newVertex->x << "," << newVertex->y << ")" << std::endl;
 
-    triangulation.erase(
-        std::remove_if(triangulation.begin(), triangulation.end(),
-            [this, baseLine, newVertex](const Face& face) {
-                bool conflicts = false;
+    std::set<EdgeInfo, EdgeInfoCompare> edges;
+    for (const Face& face : triangulation) {
+        edges.insert(EdgeInfo(face.v1, face.v2));
+        edges.insert(EdgeInfo(face.v2, face.v3));
+        edges.insert(EdgeInfo(face.v3, face.v1));
+    }
+
+    std::vector<EdgeInfo> edgesToRemove;
+    for (const EdgeInfo& edge : edges) {
+        if (EdgesIntersect(edge.v1, edge.v2, baseLine->v1, newVertex)) {
+            std::cout << "Edge [" << edge.v1->index << "]->[" << edge.v2->index 
+                      << "] intersects with new edge" << std::endl;
+            edgesToRemove.push_back(edge);
+        }
+    }
+
+    for (const auto& edge : edgesToRemove) {
+        edges.erase(edge);
+    }
+
+    triangulation.clear();
+    for (const EdgeInfo& edge : edges) {
+        for (const EdgeInfo& secondEdge : edges) {
+            if (edge == secondEdge) continue;
+            
+            if (edge.v1 == secondEdge.v1 || edge.v1 == secondEdge.v2 ||
+                edge.v2 == secondEdge.v1 || edge.v2 == secondEdge.v2) {
                 
-                if (EdgesIntersect(face.v1, face.v2, baseLine->v1, newVertex)) {
-                    std::cout << "Edge [" << face.v1->index << "]->["
-                              << face.v2->index << "] (" << face.v1->x << "," << face.v1->y << ") -> ("
-                              << face.v2->x << "," << face.v2->y << ") intersects\n";
-                    conflicts = true;
-                }
-                if (EdgesIntersect(face.v2, face.v3, baseLine->v1, newVertex)) {
-                    std::cout << "Edge [" << face.v2->index << "]->["
-                              << face.v3->index << "] (" << face.v2->x << "," << face.v2->y << ") -> ("
-                              << face.v3->x << "," << face.v3->y << ") intersects\n";
-                    conflicts = true;
-                }
-                if (EdgesIntersect(face.v3, face.v1, baseLine->v1, newVertex)) {
-                    std::cout << "Edge [" << face.v3->index << "]->["
-                              << face.v1->index << "] (" << face.v3->x << "," << face.v3->y << ") -> ("
-                              << face.v1->x << "," << face.v1->y << ") intersects\n";
-                    conflicts = true;
+                Vertex* commonVertex = nullptr;
+                Vertex* otherVertex1 = nullptr;
+                Vertex* otherVertex2 = nullptr;
+
+                if (edge.v1 == secondEdge.v1) {
+                    commonVertex = edge.v1;
+                    otherVertex1 = edge.v2;
+                    otherVertex2 = secondEdge.v2;
+                } else if (edge.v1 == secondEdge.v2) {
+                    commonVertex = edge.v1;
+                    otherVertex1 = edge.v2;
+                    otherVertex2 = secondEdge.v1;
+                } else if (edge.v2 == secondEdge.v1) {
+                    commonVertex = edge.v2;
+                    otherVertex1 = edge.v1;
+                    otherVertex2 = secondEdge.v2;
+                } else if (edge.v2 == secondEdge.v2) {
+                    commonVertex = edge.v2;
+                    otherVertex1 = edge.v1;
+                    otherVertex2 = secondEdge.v1;
                 }
 
-                if (conflicts) {
-                    std::cout << "Removing conflicting triangle: ("
-                            << face.v1->x << "," << face.v1->y << "), ("
-                            << face.v2->x << "," << face.v2->y << "), ("
-                            << face.v3->x << "," << face.v3->y << ")\n";
+                EdgeInfo thirdEdge(otherVertex1, otherVertex2);
+                if (edges.find(thirdEdge) != edges.end()) {
+                    triangulation.emplace_back(commonVertex, otherVertex1, otherVertex2);
                 }
-                return conflicts;
             }
-        ),
-        triangulation.end()
-    );
+        }
+    }
+
+    std::cout << "Remaining triangles after edge removal: " << triangulation.size() << std::endl;
 }
 
 bool DelaunayTriangulation::IsLeftOfLine(Vertex* a, Vertex* b, Vertex* c) {
@@ -359,6 +436,12 @@ std::vector<Face> DelaunayTriangulation::HandleFourPoints(std::vector<Vertex>& p
         return result;
     }
 
+    std::cout << "Found four vertices for special case:\n";
+    std::cout << "v1[" << v1->index << "](" << v1->x << "," << v1->y << ")\n";
+    std::cout << "v2[" << v2->index << "](" << v2->x << "," << v2->y << ")\n";
+    std::cout << "v3[" << v3->index << "](" << v3->x << "," << v3->y << ")\n";
+    std::cout << "v4[" << v4->index << "](" << v4->x << "," << v4->y << ")\n";
+
     std::vector<Vertex*> others = {v2, v3, v4};
     std::sort(others.begin(), others.end(),
         [v1](Vertex* a, Vertex* b) {
@@ -392,13 +475,22 @@ std::vector<Face> DelaunayTriangulation::DivideAndConquer(std::vector<Vertex>& p
 {
     size_t N = points.size();
     
+    std::cout << "\n=== Dividing " << N << " points ===\n";
+    std::cout << "Points in set: ";
+    for (const auto& p : points) {
+        std::cout << "[" << p.index << "] ";
+    }
+    std::cout << std::endl;
+
     if (N == 3) 
     {
+        std::cout << "Base case (3 points)\n";
         return CreateBaseTriangulation(points);
     }
 
     if (N == 4) 
     {
+        std::cout << "Special case (4 points)\n";
         return HandleFourPoints(points);
     }
     
@@ -407,6 +499,12 @@ std::vector<Face> DelaunayTriangulation::DivideAndConquer(std::vector<Vertex>& p
         std::vector<Vertex> left(points.begin(), points.begin() + 4);
         std::vector<Vertex> right(points.begin() + 4, points.end());
         
+        std::cout << "Splitting 8 points into:\nLeft: ";
+        for (const auto& p : left) std::cout << "[" << p.index << "] ";
+        std::cout << "\nRight: ";
+        for (const auto& p : right) std::cout << "[" << p.index << "] ";
+        std::cout << std::endl;
+
         auto leftTri = DivideAndConquer(left);
         auto rightTri = DivideAndConquer(right);
         
@@ -418,15 +516,27 @@ std::vector<Face> DelaunayTriangulation::DivideAndConquer(std::vector<Vertex>& p
         std::vector<Vertex> left(points.begin(), points.begin() + 3);
         std::vector<Vertex> right(points.begin() + 3, points.end());
         
-        auto leftTri = DivideAndConquer(left);
-        auto rightTri = DivideAndConquer(right);
-        
-        return Merge(leftTri, rightTri);
-    }
-    
+        std::cout << "Splitting " << N << " points into:\nLeft: ";
+        for (const auto& p : left) std::cout << "[" << p.index << "] ";
+        std::cout << "\nRight: ";
+        for (const auto& p : right) std::cout << "[" << p.index << "] ";
+        std::cout << std::endl;
+
+    auto leftTri = DivideAndConquer(left);
+    auto rightTri = DivideAndConquer(right);
+
+    return Merge(leftTri, rightTri);
+}
+
     size_t mid = N / 2;
     std::vector<Vertex> left(points.begin(), points.begin() + mid);
     std::vector<Vertex> right(points.begin() + mid, points.end());
+
+    std::cout << "Splitting " << N << " points into:\nLeft: ";
+    for (const auto& p : left) std::cout << "[" << p.index << "] ";
+    std::cout << "\nRight: ";
+    for (const auto& p : right) std::cout << "[" << p.index << "] ";
+    std::cout << std::endl;
 
     auto leftTri = DivideAndConquer(left);
     auto rightTri = DivideAndConquer(right);
@@ -469,7 +579,6 @@ void DelaunayTriangulation::GenerateRandomPoints(int count, float scale, float o
             if (uniquePoints.insert({x, y}).second) {
                 size_t idx = vertices.size();
                 AddVertex(x, y);
-                std::cout << "Generated point [" << idx << "]: " << x << "," << y << std::endl;
             }
         }
     }

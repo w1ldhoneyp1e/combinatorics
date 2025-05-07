@@ -14,6 +14,30 @@ private:
     std::vector<Vertex> vertices;
     std::vector<Face> faces;
 
+    struct EdgeInfo {
+        Vertex* v1;
+        Vertex* v2;
+        
+        EdgeInfo(Vertex* v1, Vertex* v2) : v1(v1), v2(v2) {
+            if (Vertex::VertexPtrCompare()(v2, v1)) {
+                std::swap(this->v1, this->v2);
+            }
+        }
+
+        bool operator==(const EdgeInfo& other) const {
+            return (v1 == other.v1 && v2 == other.v2) ||
+                   (v1 == other.v2 && v2 == other.v1);
+        }
+    };
+
+    struct EdgeInfoCompare {
+        bool operator()(const EdgeInfo& a, const EdgeInfo& b) const {
+            Vertex::VertexPtrCompare comp;
+            if (a.v1 != b.v1) return comp(a.v1, b.v1);
+            return comp(a.v2, b.v2);
+        }
+    };
+
     std::vector<Face> CreateBaseTriangulation(std::vector<Vertex>& points);
     std::vector<Face> HandleFourPoints(std::vector<Vertex>& points);
     std::vector<Face> Merge(const std::vector<Face>& left, const std::vector<Face>& right);
