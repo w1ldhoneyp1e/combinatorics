@@ -51,7 +51,13 @@ private:
     double CalculateCircumradius(Vertex* a, Vertex* b, Vertex* c);
     double CalculateBaseLineAngle(Vertex* v1, Vertex* v2, Vertex* p);
     bool EdgesIntersect(Vertex* a1, Vertex* a2, Vertex* b1, Vertex* b2) const;
-
+    void FindTangents(const std::vector<Face>& left, const std::vector<Face>& right,
+        Vertex*& P0, Vertex*& P1, Vertex*& P2, Vertex*& P3);
+    bool IsValidUpperTangent(Vertex* leftPoint, Vertex* rightPoint,
+        const std::vector<Vertex*>& vertices) const;
+    bool IsValidLowerTangent(Vertex* leftPoint, Vertex* rightPoint,
+        const std::vector<Vertex*>& vertices) const;
+        
 public:
     const std::vector<Vertex>& GetVertices() const;
     const std::vector<Face>& GetFaces() const;

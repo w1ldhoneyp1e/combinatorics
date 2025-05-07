@@ -59,112 +59,28 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
     std::cout << "Left triangulation has " << left.size() << " faces\n";
     std::cout << "Right triangulation has " << right.size() << " faces\n";
 
-    std::set<Vertex*, Vertex::VertexPtrCompare> allVertices;
-    for (const Face& face : left) {
-        allVertices.insert(face.v1);
-        allVertices.insert(face.v2);
-        allVertices.insert(face.v3);
-    }
-    for (const Face& face : right) {
-        allVertices.insert(face.v1);
-        allVertices.insert(face.v2);
-        allVertices.insert(face.v3);
-    }
-
-    std::cout << "Total unique vertices: " << allVertices.size() << std::endl;
-
     std::vector<Face> result = left;
     result.insert(result.end(), right.begin(), right.end());
 
-    Vertex* P0 = nullptr;
-    Vertex* P1 = nullptr;
-    Vertex* P2 = nullptr;
-    Vertex* P3 = nullptr;
-
-    double minY_left = std::numeric_limits<double>::infinity();
-    double minY_right = std::numeric_limits<double>::infinity();
-
-    for (const Face& face : left) {
-        if (face.v1->y < minY_left) { 
-            P0 = face.v1; 
-            minY_left = face.v1->y;
-            std::cout << "Found new lowest left point [" << face.v1->index << "]\n";
-        }
-        if (face.v2->y < minY_left) { 
-            P0 = face.v2; 
-            minY_left = face.v2->y;
-            std::cout << "Found new lowest left point [" << face.v2->index << "]\n";
-        }
-        if (face.v3->y < minY_left) { 
-            P0 = face.v3; 
-            minY_left = face.v3->y;
-            std::cout << "Found new lowest left point [" << face.v3->index << "]\n";
-        }
-    }
-
-    for (const Face& face : right) {
-        if (face.v1->y < minY_right) { 
-            P1 = face.v1; 
-            minY_right = face.v1->y;
-            std::cout << "Found new lowest right point [" << face.v1->index << "]\n";
-        }
-        if (face.v2->y < minY_right) { 
-            P1 = face.v2; 
-            minY_right = face.v2->y;
-            std::cout << "Found new lowest right point [" << face.v2->index << "]\n";
-        }
-        if (face.v3->y < minY_right) { 
-            P1 = face.v3; 
-            minY_right = face.v3->y;
-            std::cout << "Found new lowest right point [" << face.v3->index << "]\n";
-        }
-    }
-
-    double maxY_left = -std::numeric_limits<double>::infinity();
-    double maxY_right = -std::numeric_limits<double>::infinity();
-
-    for (const Face& face : left) {
-        if (face.v1->y > maxY_left) { 
-            P2 = face.v1; 
-            maxY_left = face.v1->y;
-            std::cout << "Found new highest left point [" << face.v1->index << "]\n";
-        }
-        if (face.v2->y > maxY_left) { 
-            P2 = face.v2; 
-            maxY_left = face.v2->y;
-            std::cout << "Found new highest left point [" << face.v2->index << "]\n";
-        }
-        if (face.v3->y > maxY_left) { 
-            P2 = face.v3; 
-            maxY_left = face.v3->y;
-            std::cout << "Found new highest left point [" << face.v3->index << "]\n";
-        }
-    }
-
-    for (const Face& face : right) {
-        if (face.v1->y > maxY_right) { 
-            P3 = face.v1; 
-            maxY_right = face.v1->y;
-            std::cout << "Found new highest right point [" << face.v1->index << "]\n";
-        }
-        if (face.v2->y > maxY_right) { 
-            P3 = face.v2; 
-            maxY_right = face.v2->y;
-            std::cout << "Found new highest right point [" << face.v2->index << "]\n";
-        }
-        if (face.v3->y > maxY_right) { 
-            P3 = face.v3; 
-            maxY_right = face.v3->y;
-            std::cout << "Found new highest right point [" << face.v3->index << "]\n";
-        }
-    }
-
-    std::cout << "\nBase points found:";
-    std::cout << "\nLower base line: P0[" << P0->index << "]" << " -> P1[" << P1->index << "]";
-    std::cout << "\nUpper base line: P2[" << P2->index << "]" << " -> P3[" << P3->index << "]";
+    Vertex *P0 = nullptr, *P1 = nullptr, *P2 = nullptr, *P3 = nullptr;
+    FindTangents(left, right, P0, P1, P2, P3);
 
     Edge* baseLine = new Edge(P0, P1);
     int iterationCount = 0;
+
+    std::set<Vertex*, Vertex::VertexPtrCompare> leftVertices;
+    std::set<Vertex*, Vertex::VertexPtrCompare> rightVertices;
+    
+    for (const Face& face : left) {
+        leftVertices.insert(face.v1);
+        leftVertices.insert(face.v2);
+        leftVertices.insert(face.v3);
+    }
+    for (const Face& face : right) {
+        rightVertices.insert(face.v1);
+        rightVertices.insert(face.v2);
+        rightVertices.insert(face.v3);
+    }
 
     while (true) {
         iterationCount++;
@@ -172,7 +88,7 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
         std::cout << "\nCurrent baseline: [" << baseLine->v1->index << "](" << baseLine->v1->x << "," << baseLine->v1->y 
                   << ") -> [" << baseLine->v2->index << "](" << baseLine->v2->x << "," << baseLine->v2->y << ")" << std::endl;
         
-        Vertex* delaunayNeighbor = FindDelaunayNeighbor(baseLine, allVertices);
+        Vertex* delaunayNeighbor = FindDelaunayNeighbor(baseLine, leftVertices);
         if (!delaunayNeighbor) {
             std::cout << "No Delaunay neighbor found, stopping" << std::endl;
             break;
@@ -199,17 +115,19 @@ std::vector<Face> DelaunayTriangulation::Merge(const std::vector<Face>& left, co
         Vertex* oldV1 = baseLine->v1;
         Vertex* oldV2 = baseLine->v2;
 
-        if (IsLowerPoint(delaunayNeighbor, baseLine->v1) || IsLowerPoint(delaunayNeighbor, baseLine->v2)) 
-        {
-            if (IsLowerPoint(baseLine->v1, baseLine->v2)) {
-                std::cout << "Setting new baseline: replacing v2[" << baseLine->v2->index 
-                          << "] with [" << delaunayNeighbor->index << "]" << std::endl;
-                baseLine->v2 = delaunayNeighbor;
-            } else {
-                std::cout << "Setting new baseline: replacing v1[" << baseLine->v1->index 
-                          << "] with [" << delaunayNeighbor->index << "]" << std::endl;
-                baseLine->v1 = delaunayNeighbor;
-            }
+        bool isInLeft = leftVertices.find(delaunayNeighbor) != leftVertices.end();
+        bool isInRight = rightVertices.find(delaunayNeighbor) != rightVertices.end();
+
+        if (isInLeft) {
+            std::cout << "Setting new baseline: replacing left vertex v1[" << baseLine->v1->index 
+                      << "] with [" << delaunayNeighbor->index << "] (from left part)" << std::endl;
+            baseLine->v1 = delaunayNeighbor;
+        } else if (isInRight) {
+            std::cout << "Setting new baseline: replacing right vertex v2[" << baseLine->v2->index 
+                      << "] with [" << delaunayNeighbor->index << "] (from right part)" << std::endl;
+            baseLine->v2 = delaunayNeighbor;
+        } else {
+            std::cout << "Warning: Delaunay neighbor not found in either part!" << std::endl;
         }
 
         if (oldV1 == baseLine->v1 && oldV2 == baseLine->v2) {
@@ -606,4 +524,113 @@ bool DelaunayTriangulation::EdgesIntersect(Vertex* a1, Vertex* a2, Vertex* b1, V
     if (std::abs(d4) < 1e-10) return false;
 
     return (d1 * d2 < 0) && (d3 * d4 < 0);
+}
+
+void DelaunayTriangulation::FindTangents(const std::vector<Face>& left, const std::vector<Face>& right,
+    Vertex*& P0, Vertex*& P1, Vertex*& P2, Vertex*& P3) 
+{
+    std::vector<Vertex*> leftVertices;
+    std::vector<Vertex*> rightVertices;
+    
+    for (const Face& face : left) {
+        if (std::find(leftVertices.begin(), leftVertices.end(), face.v1) == leftVertices.end())
+            leftVertices.push_back(face.v1);
+        if (std::find(leftVertices.begin(), leftVertices.end(), face.v2) == leftVertices.end())
+            leftVertices.push_back(face.v2);
+        if (std::find(leftVertices.begin(), leftVertices.end(), face.v3) == leftVertices.end())
+            leftVertices.push_back(face.v3);
+    }
+    
+    for (const Face& face : right) {
+        if (std::find(rightVertices.begin(), rightVertices.end(), face.v1) == rightVertices.end())
+            rightVertices.push_back(face.v1);
+        if (std::find(rightVertices.begin(), rightVertices.end(), face.v2) == rightVertices.end())
+            rightVertices.push_back(face.v2);
+        if (std::find(rightVertices.begin(), rightVertices.end(), face.v3) == rightVertices.end())
+            rightVertices.push_back(face.v3);
+    }
+
+    std::sort(leftVertices.begin(), leftVertices.end(),
+        [](Vertex* a, Vertex* b) { return a->y < b->y; });
+    std::sort(rightVertices.begin(), rightVertices.end(),
+        [](Vertex* a, Vertex* b) { return a->y < b->y; });
+
+    std::vector<Vertex*> allVertices;
+    allVertices.insert(allVertices.end(), leftVertices.begin(), leftVertices.end());
+    allVertices.insert(allVertices.end(), rightVertices.begin(), rightVertices.end());
+
+    std::cout << "\nSearching for upper tangent...\n";
+    bool foundUpper = false;
+    for (Vertex* leftIt : leftVertices) {
+        for (Vertex* rightIt : rightVertices) {
+            if (IsValidUpperTangent(leftIt, rightIt, allVertices)) {
+                P0 = leftIt;  // Верхняя касательная
+                P1 = rightIt;
+                std::cout << "Found upper tangent: [" << P0->index << "] -> [" << P1->index << "]\n";
+                foundUpper = true;
+                break;
+            }
+        }
+        if (foundUpper) break;
+    }
+
+    std::cout << "\nSearching for lower tangent...\n";
+    bool foundLower = false;
+    for (Vertex* leftV : leftVertices) {
+        for (Vertex* rightV : rightVertices) {
+            if (IsValidLowerTangent(leftV, rightV, allVertices)) {
+                P2 = leftV;    // Нижняя касательная
+                P3 = rightV;
+                std::cout << "Found lower tangent: [" << P2->index << "] -> [" << P3->index << "]\n";
+                foundLower = true;
+                break;
+            }
+        }
+        if (foundLower) break;
+    }
+
+    if (!foundUpper || !foundLower) {
+        std::cout << "Error: Could not find valid tangents!\n";
+        return;
+    }
+
+    std::cout << "\nFinal tangent lines:";
+    std::cout << "\nUpper tangent: [" << P0->index << "] -> [" << P1->index << "]";
+    std::cout << "\nLower tangent: [" << P2->index << "] -> [" << P3->index << "]\n";
+}
+
+bool DelaunayTriangulation::IsValidUpperTangent(Vertex* leftPoint, Vertex* rightPoint, const std::vector<Vertex*>& vertices) const 
+{
+    for (Vertex* v : vertices) {
+        if (v == leftPoint || v == rightPoint) continue;
+        
+        double cross = (rightPoint->x - leftPoint->x) * (v->y - leftPoint->y) -
+                      (rightPoint->y - leftPoint->y) * (v->x - leftPoint->x);
+        
+        if (cross < 0) {
+            std::cout << "Point [" << v->index << "] is on the wrong side of upper tangent\n";
+            return false;
+        }
+    }
+    
+    std::cout << "Valid upper tangent: [" << leftPoint->index << "] -> [" << rightPoint->index << "]\n";
+    return true;
+}
+
+bool DelaunayTriangulation::IsValidLowerTangent(Vertex* leftPoint, Vertex* rightPoint, const std::vector<Vertex*>& vertices) const 
+{
+    for (Vertex* v : vertices) {
+        if (v == leftPoint || v == rightPoint) continue;
+        
+        double cross = (rightPoint->x - leftPoint->x) * (v->y - leftPoint->y) -
+                      (rightPoint->y - leftPoint->y) * (v->x - leftPoint->x);
+        
+        if (cross > 0) {
+            std::cout << "Point [" << v->index << "] is on the wrong side of lower tangent\n";
+            return false;
+        }
+    }
+    
+    std::cout << "Valid lower tangent: [" << leftPoint->index << "] -> [" << rightPoint->index << "]\n";
+    return true;
 }
