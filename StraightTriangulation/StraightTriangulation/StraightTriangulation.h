@@ -22,8 +22,12 @@ private:
     Face::Faces faces;
 
     std::vector<Vertex*> ConvexHull(std::vector<Vertex*> vertexPtrs);
-    double Cross(const Vertex& O, const Vertex& A, const Vertex& B);
     bool InCircle(const Vertex& p, Vertex* a, Vertex* b, Vertex* c);
+    double GetOrientation(const Vertex& O, const Vertex& A, const Vertex& B);
+    bool IsTriangleUsed(const std::set<std::tuple<Vertex*, Vertex*, Vertex*>>& usedTriangles, Vertex* a, Vertex* b, Vertex* c);
+    void AddTriangle(std::set<std::tuple<Vertex*, Vertex*, Vertex*>>& usedTriangles, Vertex* a, Vertex* b, Vertex* c);
+    bool IsDelaunay(Vertex* a, Vertex* b, Vertex* c, const std::vector<Vertex*>& vertexPtrs);
+    Vertex* FindBestPointForEdge(const Edge& edge, const std::vector<Vertex*>& vertexPtrs, const std::set<std::tuple<Vertex*, Vertex*, Vertex*>>& usedTriangles);
 
 public:
     void Triangulate();
