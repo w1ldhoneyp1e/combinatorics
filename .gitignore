@@ -26,6 +26,8 @@ bld/
 LW3/lib
 LW3/include
 LW3/packages
+StraightTriangulation/include
+StraightTriangulation/lib
 
 # Visual Studio 2017/2019/2022 автоматически генерируемые файлы
 Generated\ Files/
