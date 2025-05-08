@@ -60,7 +60,9 @@ private:
         const std::vector<Vertex*>& vertices) const;
     bool IsValidLowerTangent(Vertex* leftPoint, Vertex* rightPoint,
         const std::vector<Vertex*>& vertices) const;
-        
+    bool PointInCircumcircle(Vertex* a, Vertex* b, Vertex* c, Vertex* d) const;
+    
+
 public:
     const std::vector<Vertex>& GetVertices() const;
     const std::vector<Face>& GetFaces() const;

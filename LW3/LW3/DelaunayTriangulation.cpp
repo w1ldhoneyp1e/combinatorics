@@ -221,78 +221,68 @@ double DelaunayTriangulation::CalculateBaseLineAngle(Vertex* v1, Vertex* v2, Ver
 }
 
 void DelaunayTriangulation::RemoveConflictingTriangles(
-    std::vector<Face>& triangulation, 
+    std::vector<Face>& triangulation,
     Edge* baseLine, 
-    Vertex* newVertex,
-    const std::set<Vertex*, Vertex::VertexPtrCompare>& leftVertices)
+    Vertex* P,      
+    const std::set<Vertex*, Vertex::VertexPtrCompare>& leftVertices) 
 {
-    bool isInLeft = leftVertices.find(newVertex) != leftVertices.end();
+    Vertex* X; 
+    bool pIsInLeftSet = leftVertices.find(P) != leftVertices.end();
+
+    if (pIsInLeftSet) 
+    {
+        X = baseLine->v2; 
+    }
+    else 
+    {
+        X = baseLine->v1; 
+    }
+
+    std::cout << "\nRemoveConflictingTriangles: Checking for conflicts with potential edge ["
+              << X->index << "](" << X->x << "," << X->y << ") -> ["
+              << P->index << "](" << P->x << "," << P->y << ")" << std::endl;
+
+    size_t initialFaceCount = triangulation.size();
     
-    Vertex* baseVertex = isInLeft ? baseLine->v2 : baseLine->v1;
-    
-    std::cout << "\nChecking for conflicting edges with new edge: ["
-              << baseVertex->index << "](" << baseVertex->x << "," << baseVertex->y << ") -> ["
-              << newVertex->index << "](" << newVertex->x << "," << newVertex->y << ")" << std::endl;
-
-    std::set<EdgeInfo, EdgeInfoCompare> edges;
-    for (const Face& face : triangulation) {
-        edges.insert(EdgeInfo(face.v1, face.v2));
-        edges.insert(EdgeInfo(face.v2, face.v3));
-        edges.insert(EdgeInfo(face.v3, face.v1));
-    }
-
-    std::vector<EdgeInfo> edgesToRemove;
-    for (const EdgeInfo& edge : edges) {
-        if (EdgesIntersect(edge.v1, edge.v2, baseVertex, newVertex)) {
-            std::cout << "Edge [" << edge.v1->index << "]->[" << edge.v2->index 
-                      << "] intersects with new edge" << std::endl;
-            edgesToRemove.push_back(edge);
-        }
-    }
-
-    for (const auto& edge : edgesToRemove) {
-        edges.erase(edge);
-    }
-
-    triangulation.clear();
-    for (const EdgeInfo& edge : edges) {
-        for (const EdgeInfo& secondEdge : edges) {
-            if (edge == secondEdge) continue;
-            
-            if (edge.v1 == secondEdge.v1 || edge.v1 == secondEdge.v2 ||
-                edge.v2 == secondEdge.v1 || edge.v2 == secondEdge.v2) {
+    triangulation.erase(
+        std::remove_if(triangulation.begin(), triangulation.end(),
+            [&](const Face& face) 
+            { 
+                bool conflictFound = false;
+                if (EdgesIntersect(face.v1, face.v2, X, P)) 
+                {
+                    std::cout << "  Edge [" << face.v1->index << "]-[" << face.v2->index << "] of face ("
+                              << face.v1->index << "," << face.v2->index << "," << face.v3->index 
+                              << ") conflicts with [" << X->index << "]-[" << P->index << "]." << std::endl;
+                    conflictFound = true;
+                }
+                if (!conflictFound && EdgesIntersect(face.v2, face.v3, X, P)) 
+                {
+                     std::cout << "  Edge [" << face.v2->index << "]-[" << face.v3->index << "] of face ("
+                              << face.v1->index << "," << face.v2->index << "," << face.v3->index 
+                              << ") conflicts with [" << X->index << "]-[" << P->index << "]." << std::endl;
+                    conflictFound = true;
+                }
+                if (!conflictFound && EdgesIntersect(face.v3, face.v1, X, P)) 
+                {
+                     std::cout << "  Edge [" << face.v3->index << "]-[" << face.v1->index << "] of face ("
+                              << face.v1->index << "," << face.v2->index << "," << face.v3->index 
+                              << ") conflicts with [" << X->index << "]-[" << P->index << "]." << std::endl;
+                    conflictFound = true;
+                }
                 
-                Vertex* commonVertex = nullptr;
-                Vertex* otherVertex1 = nullptr;
-                Vertex* otherVertex2 = nullptr;
-
-                if (edge.v1 == secondEdge.v1) {
-                    commonVertex = edge.v1;
-                    otherVertex1 = edge.v2;
-                    otherVertex2 = secondEdge.v2;
-                } else if (edge.v1 == secondEdge.v2) {
-                    commonVertex = edge.v1;
-                    otherVertex1 = edge.v2;
-                    otherVertex2 = secondEdge.v1;
-                } else if (edge.v2 == secondEdge.v1) {
-                    commonVertex = edge.v2;
-                    otherVertex1 = edge.v1;
-                    otherVertex2 = secondEdge.v2;
-                } else if (edge.v2 == secondEdge.v2) {
-                    commonVertex = edge.v2;
-                    otherVertex1 = edge.v1;
-                    otherVertex2 = secondEdge.v1;
+                if (conflictFound) 
+                {
+                    std::cout << "  Removing face (" << face.v1->index << "," << face.v2->index << "," << face.v3->index << ")" << std::endl;
+                    return true; 
                 }
+                return false; 
+            }),
+        triangulation.end() 
+    );
 
-                EdgeInfo thirdEdge(otherVertex1, otherVertex2);
-                if (edges.find(thirdEdge) != edges.end()) {
-                    triangulation.emplace_back(commonVertex, otherVertex1, otherVertex2);
-                }
-            }
-        }
-    }
-
-    std::cout << "Remaining triangles after edge removal: " << triangulation.size() << std::endl;
+    std::cout << "Removed " << initialFaceCount - triangulation.size() << " conflicting faces." << std::endl;
+    std::cout << "Triangulation size after conflict removal: " << triangulation.size() << std::endl;
 }
 
 bool DelaunayTriangulation::IsLeftOfLine(Vertex* a, Vertex* b, Vertex* c) {
@@ -325,78 +315,102 @@ double DelaunayTriangulation::CalculateCircumradius(Vertex* a, Vertex* b, Vertex
     return std::hypot(x - ax, y - ay);
 }
 
-std::vector<Face> DelaunayTriangulation::HandleFourPoints(std::vector<Vertex>& points) 
+std::vector<Face> DelaunayTriangulation::HandleFourPoints(std::vector<Vertex>& pointsParam)
 {
     std::vector<Face> result;
-    
-    Vertex* v1 = nullptr;
-    Vertex* v2 = nullptr;
-    Vertex* v3 = nullptr;
-    Vertex* v4 = nullptr;
-
-    double minY = std::numeric_limits<double>::infinity();
-    int topIndex = 0;
-    for (int i = 0; i < 4; i++) {
-        if (points[i].y < minY) {
-            minY = points[i].y;
-            topIndex = i;
-        }
-    }
-
-    for (auto& vertex : vertices)
+    if (pointsParam.size() != 4)
     {
-        if (std::abs(vertex.x - points[topIndex].x) < 1e-10 && 
-            std::abs(vertex.y - points[topIndex].y) < 1e-10) 
-            v1 = &vertex;
-        if (std::abs(vertex.x - points[(topIndex + 1) % 4].x) < 1e-10 && 
-            std::abs(vertex.y - points[(topIndex + 1) % 4].y) < 1e-10) 
-            v2 = &vertex;
-        if (std::abs(vertex.x - points[(topIndex + 2) % 4].x) < 1e-10 && 
-            std::abs(vertex.y - points[(topIndex + 2) % 4].y) < 1e-10) 
-            v3 = &vertex;
-        if (std::abs(vertex.x - points[(topIndex + 3) % 4].x) < 1e-10 && 
-            std::abs(vertex.y - points[(topIndex + 3) % 4].y) < 1e-10) 
-            v4 = &vertex;
-    }
-
-    if (!v1 || !v2 || !v3 || !v4) 
-    {
-        std::cout << "Error: Could not find vertices in the main vector" << std::endl;
+        std::cerr << "HandleFourPoints был вызван с " << pointsParam.size() << " точками, когда ожидалось 4." << std::endl;
         return result;
     }
 
-    std::cout << "Found four vertices for special case:\n";
-    std::cout << "v1[" << v1->index << "](" << v1->x << "," << v1->y << ")\n";
-    std::cout << "v2[" << v2->index << "](" << v2->x << "," << v2->y << ")\n";
-    std::cout << "v3[" << v3->index << "](" << v3->x << "," << v3->y << ")\n";
-    std::cout << "v4[" << v4->index << "](" << v4->x << "," << v4->y << ")\n";
+    Vertex* pOrig[4];
+    for (int i = 0; i < 4; ++i)
+    {
+        bool found = false;
+        for (auto& masterV : this->vertices)
+        {
+            if (std::abs(masterV.x - pointsParam[i].x) < 1e-9 && std::abs(masterV.y - pointsParam[i].y) < 1e-9)
+            {
+                pOrig[i] = &masterV;
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+        {
+            std::cerr << "HandleFourPoints: Не удалось найти главную вершину для точки с индексом " << pointsParam[i].index << std::endl;
+            return result;
+        }
+    }
 
-    std::vector<Vertex*> others = {v2, v3, v4};
-    std::sort(others.begin(), others.end(),
-        [v1](Vertex* a, Vertex* b) {
-            double angleA = std::atan2(a->y - v1->y, a->x - v1->x);
-            double angleB = std::atan2(b->y - v1->y, b->x - v1->x);
+    Vertex* pSorted[4];
+    std::copy(pOrig, pOrig + 4, pSorted);
+
+    int minIdx = 0;
+    for (int i = 1; i < 4; ++i)
+    {
+        if (pSorted[i]->y < pSorted[minIdx]->y || (pSorted[i]->y == pSorted[minIdx]->y && pSorted[i]->x < pSorted[minIdx]->x))
+        {
+            minIdx = i;
+        }
+    }
+    std::swap(pSorted[0], pSorted[minIdx]);
+
+    std::sort(pSorted + 1, pSorted + 4, [&](Vertex* a, Vertex* b)
+    {
+        double angleA = std::atan2(a->y - pSorted[0]->y, a->x - pSorted[0]->x);
+        double angleB = std::atan2(b->y - pSorted[0]->y, b->x - pSorted[0]->x);
+        if (std::abs(angleA - angleB) > 1e-9)
+        {
             return angleA < angleB;
-        });
+        }
+        return ((a->x - pSorted[0]->x) * (a->x - pSorted[0]->x) + (a->y - pSorted[0]->y) * (a->y - pSorted[0]->y) <
+                (b->x - pSorted[0]->x) * (b->x - pSorted[0]->x) + (b->y - pSorted[0]->y) * (b->y - pSorted[0]->y));
+    });
+
+    std::cout << "HandleFourPoints, упорядоченные вершины: "
+              << "p0[" << pSorted[0]->index << "], p1[" << pSorted[1]->index
+              << "], p2[" << pSorted[2]->index << "], p3[" << pSorted[3]->index << "]" << std::endl;
+
+    auto createOrientedFace = [](Vertex* v1, Vertex* v2, Vertex* v3)
+    {
+        double orientationVal = (v2->x - v1->x) * (v3->y - v1->y) -
+                                (v3->x - v1->x) * (v2->y - v1->y);
+        if (orientationVal < 0)
+        {
+            return Face(v1, v3, v2);
+        }
+        return Face(v1, v2, v3);
+    };
     
-    v2 = others[0];
-    v3 = others[1];
-    v4 = others[2];
+    Face tempFace1 = createOrientedFace(pSorted[0], pSorted[1], pSorted[2]);
+    Face tempFace2 = createOrientedFace(pSorted[0], pSorted[2], pSorted[3]);
 
-    double cross1 = (v3->x - v1->x) * (v4->y - v2->y) - (v3->y - v1->y) * (v4->x - v2->x);
-    double cross2 = (v4->x - v2->x) * (v1->y - v3->y) - (v4->y - v2->y) * (v1->x - v3->x);
+    bool diag02IsDelaunay = false;
+    if (!PointInCircumcircle(tempFace1.v1, tempFace1.v2, tempFace1.v3, pSorted[3]) &&
+        !PointInCircumcircle(tempFace2.v1, tempFace2.v2, tempFace2.v3, pSorted[1]))
+    {
+        diag02IsDelaunay = true;
+    }
 
-    if (cross1 * cross2 > 0) 
+    if (diag02IsDelaunay)
     {
-        result.emplace_back(v1, v2, v3);
-        result.emplace_back(v3, v4, v1);
-    } 
-    else 
+        std::cout << "  HandleFourPoints: Выбрана диагональ " << pSorted[0]->index << "-" << pSorted[2]->index << std::endl;
+        result.push_back(tempFace1);
+        result.push_back(tempFace2);
+    }
+    else
     {
-        result.emplace_back(v2, v3, v4);
-        result.emplace_back(v4, v1, v2);
+        std::cout << "  HandleFourPoints: Выбрана диагональ " << pSorted[1]->index << "-" << pSorted[3]->index << std::endl;
+        result.push_back(createOrientedFace(pSorted[1], pSorted[0], pSorted[3]));
+        result.push_back(createOrientedFace(pSorted[1], pSorted[3], pSorted[2]));
     }
     
+    if (result.size() != 2 && pointsParam.size() == 4)
+    {
+         std::cout << "  ПРЕДУПРЕЖДЕНИЕ HandleFourPoints: Создано " << result.size() << " граней вместо 2." << std::endl;
+    }
     return result;
 }
 
@@ -644,4 +658,42 @@ bool DelaunayTriangulation::IsValidLowerTangent(Vertex* leftPoint, Vertex* right
     
     std::cout << "Valid lower tangent: [" << leftPoint->index << "] -> [" << rightPoint->index << "]\n";
     return true;
+}
+
+bool DelaunayTriangulation::PointInCircumcircle(Vertex* p1, Vertex* p2, Vertex* p3, Vertex* pTest) const
+{
+    double ax = p1->x; double ay = p1->y;
+    double bx = p2->x; double by = p2->y;
+    double cx = p3->x; double cy = p3->y;
+    double dx = pTest->x; double dy = pTest->y;
+
+    double orientationP1P2P3 = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+
+    if (std::abs(orientationP1P2P3) < 1e-12)
+    {
+        return false;
+    }
+
+    double adx = ax - dx; double ady = ay - dy;
+    double bdx = bx - dx; double bdy = by - dy;
+    double cdx = cx - dx; double cdy = cy - dy;
+
+    double asq = adx * adx + ady * ady;
+    double bsq = bdx * bdx + bdy * bdy;
+    double csq = cdx * cdx + cdy * cdy;
+
+    double det = adx * (bdy * csq - cdy * bsq) -
+                 ady * (bdx * csq - cdx * bsq) +
+                 asq * (bdx * cdy - cdx * bdy);
+
+    double epsilon = 1e-9;
+
+    if (orientationP1P2P3 > 0)
+    {
+        return det > epsilon;
+    }
+    else
+    {
+        return det < -epsilon;
+    }
 }
