@@ -144,11 +144,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Draw.cpp" />
-    <ClCompile Include="Edge.cpp" />
-    <ClCompile Include="Face.cpp" />
     <ClCompile Include="LW3.cpp" />
     <ClCompile Include="StraightTriangulation.cpp" />
-    <ClCompile Include="Vertex.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Draw.h" />

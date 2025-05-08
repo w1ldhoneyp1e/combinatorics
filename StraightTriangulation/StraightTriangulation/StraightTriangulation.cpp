@@ -7,13 +7,15 @@
 #include <iostream>
 #include <algorithm>
 
-bool StraightTriangulation::IsTriangleUsed(const std::set<std::tuple<Vertex*, Vertex*, Vertex*>>& usedTriangles, Vertex* a, Vertex* b, Vertex* c) {
+bool StraightTriangulation::IsTriangleUsed(const std::set<Face>& usedTriangles, Vertex* a, Vertex* b, Vertex* c) 
+{
     return usedTriangles.count({a, b, c}) || usedTriangles.count({a, c, b}) ||
            usedTriangles.count({b, a, c}) || usedTriangles.count({b, c, a}) ||
            usedTriangles.count({c, a, b}) || usedTriangles.count({c, b, a});
 }
 
-void StraightTriangulation::AddTriangle(std::set<std::tuple<Vertex*, Vertex*, Vertex*>>& usedTriangles, Vertex* a, Vertex* b, Vertex* c) {
+void StraightTriangulation::AddTriangle(std::set<Face>& usedTriangles, Vertex* a, Vertex* b, Vertex* c)
+{
     usedTriangles.insert({a, b, c});
     usedTriangles.insert({a, c, b});
     usedTriangles.insert({b, a, c});
@@ -23,7 +25,8 @@ void StraightTriangulation::AddTriangle(std::set<std::tuple<Vertex*, Vertex*, Ve
     faces.emplace_back(a, b, c);
 }
 
-bool StraightTriangulation::IsDelaunay(Vertex* a, Vertex* b, Vertex* c, const std::vector<Vertex*>& vertexPtrs) {
+bool StraightTriangulation::IsDelaunay(Vertex* a, Vertex* b, Vertex* c, const std::vector<Vertex*>& vertexPtrs) 
+{
     for (Vertex* p : vertexPtrs) {
         if (p == a || p == b || p == c) continue;
         if (InCircle(*p, a, b, c)) {
@@ -33,7 +36,11 @@ bool StraightTriangulation::IsDelaunay(Vertex* a, Vertex* b, Vertex* c, const st
     return true;
 }
 
-Vertex* StraightTriangulation::FindBestPointForEdge(const Edge& edge, const std::vector<Vertex*>& vertexPtrs, const std::set<std::tuple<Vertex*, Vertex*, Vertex*>>& usedTriangles) {
+Vertex* StraightTriangulation::FindBestPointForEdge(
+    const Edge& edge, 
+    const std::vector<Vertex*>& vertexPtrs, 
+    const std::set<Face>& usedFaces) 
+{
     Vertex* a = edge.v1;
     Vertex* b = edge.v2;
     Vertex* best = nullptr;
@@ -44,7 +51,7 @@ Vertex* StraightTriangulation::FindBestPointForEdge(const Edge& edge, const std:
         double orient = GetOrientation(*a, *b, *c);
         if (orient <= 0) continue;
 
-        if (IsTriangleUsed(usedTriangles, a, b, c)) continue;
+        if (usedFaces.count(Face(a, b, c))) continue;
 
         double A = hypot(a->x - b->x, a->y - b->y);
         double B = hypot(b->x - c->x, b->y - c->y);
@@ -74,7 +81,7 @@ void StraightTriangulation::Triangulate()
 
     std::vector<Vertex*> hull = ConvexHull(vertexPtrs);
 
-    std::set<std::tuple<Vertex*, Vertex*, Vertex*>> usedTriangles;
+    std::set<Face> usedTriangles;
     std::map<Edge, int> edgeSide;
 
     std::vector<Edge> activeEdges;
@@ -136,7 +143,8 @@ std::vector<Vertex*> StraightTriangulation::ConvexHull(std::vector<Vertex*> vert
     std::vector<Vertex*> hull;
     for (int i = 0; i < 2; i++) {
         auto start = hull.size();
-        for (Vertex* p : (i == 0 ? vertexPtrs : std::vector<Vertex*>(vertexPtrs.rbegin(), vertexPtrs.rend()))) {
+        for (Vertex* p : (i == 0 ? vertexPtrs : std::vector<Vertex*>(vertexPtrs.rbegin(), vertexPtrs.rend()))) 
+        {
             while (hull.size() >= start + 2 && GetOrientation(*hull[hull.size() - 2], *hull.back(), *p) <= 0)
                 hull.pop_back();
             hull.push_back(p);
@@ -167,8 +175,10 @@ void StraightTriangulation::GenerateRandomPoints(int count, float scale, float o
         float screenY = -y * scale + offsetY;
 
         if (screenX >= 0 && screenX <= windowWidth &&
-            screenY >= 0 && screenY <= windowHeight) {
-            if (uniquePoints.insert({ x, y }).second) {
+            screenY >= 0 && screenY <= windowHeight) 
+        {
+            if (uniquePoints.insert({ x, y }).second) 
+            {
                 size_t idx = vertices.size();
                 AddVertex(x, y);
             }
