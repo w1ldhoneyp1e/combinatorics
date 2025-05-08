@@ -61,7 +61,8 @@ private:
     bool IsValidLowerTangent(Vertex* leftPoint, Vertex* rightPoint,
         const std::vector<Vertex*>& vertices) const;
     bool PointInCircumcircle(Vertex* a, Vertex* b, Vertex* c, Vertex* d) const;
-    
+    double Orientation(Vertex* a, Vertex* b, Vertex* c) const;
+
 
 public:
     const std::vector<Vertex>& GetVertices() const;
