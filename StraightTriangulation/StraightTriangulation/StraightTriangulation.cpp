@@ -184,11 +184,6 @@ void StraightTriangulation::GenerateRandomPoints(int count, float scale, float o
             }
         }
     }
-
-    std::cout << "\nGenerated " << vertices.size() << " points:\n";
-    for (const auto& v : vertices) {
-        std::cout << "[" << v.index << "]: " << v.x << "," << v.y << std::endl;
-    }
 }
 
 void StraightTriangulation::AddVertex(double x, double y)
