@@ -3,6 +3,7 @@
 #include <vector>
 #include <istream>
 #include <limits>
+#include <list>
 
 class Web
 {
@@ -34,6 +35,7 @@ private:
 
 	std::vector<Vertex> m_vertices;
 	std::vector<Edge> m_edges;
+	std::list<Vertex*> m_activeVertices;
 	uint32_t m_size = 0;
 
 public:
