@@ -5,14 +5,16 @@
 
 int main(int argc, char* argv[])
 {
-    if (argc != 2) {
+    if (argc != 2) 
+    {
         std::cerr << "Usage: " << argv[0] << " <input_filepath>" << std::endl;
         return 1;
     }
 
     std::ifstream inputFile(argv[1]); 
 
-    if (!inputFile.is_open()) {
+    if (!inputFile.is_open()) 
+    {
         std::cerr << "Error: Could not open file '" << argv[1] << "'" << std::endl;
         return 1;
     }
@@ -33,7 +35,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    if (inputFile.is_open()) {
+    if (inputFile.is_open()) 
+    {
         inputFile.close();
     }
 
